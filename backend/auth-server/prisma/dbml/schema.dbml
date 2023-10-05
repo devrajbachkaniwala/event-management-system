@@ -1,0 +1,122 @@
+//// ------------------------------------------------------
+//// THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+//// ------------------------------------------------------
+
+Table users {
+  id String [pk]
+  username String [not null]
+  userPhotoUrl String
+  fullName String [not null]
+  email String [unique, not null]
+  password String [not null]
+  role Role [not null, default: 'USER']
+  isActive Boolean [not null, default: true]
+  createdAt DateTime [default: `now()`, not null]
+  modifiedAt DateTime [not null]
+  tokens user_tokens [not null]
+  organization organizations
+  orgId String
+  reviews reviews [not null]
+  bookings bookings [not null]
+}
+
+Table user_tokens {
+  id String [pk]
+  accessToken String [not null]
+  accessTokenExpiredAt DateTime [not null]
+  refreshToken String [not null]
+  refreshTokenExpiredAt DateTime [not null]
+  createdAt DateTime [default: `now()`, not null]
+  modifiedAt DateTime [not null]
+  user users [not null]
+  userId String [not null]
+}
+
+Table organizations {
+  id String [pk]
+  name String [not null]
+  description String [not null]
+  contactNo String [not null]
+  email String [not null]
+  photoUrl String [not null]
+  createdAt DateTime [default: `now()`, not null]
+  modifiedAt DateTime [not null]
+  teamMembers users [not null]
+  events events [not null]
+  bookings bookings [not null]
+}
+
+Table events {
+  id String [pk]
+  name String [not null]
+  description String [not null]
+  city String [not null]
+  state String [not null]
+  country String [not null]
+  venue String [not null]
+  category String [not null]
+  photos EventPhoto[] [not null]
+  timings EventTiming[] [not null]
+  prices EventPrice[] [not null]
+  createdAt DateTime [default: `now()`, not null]
+  modifiedAt DateTime [not null]
+  organization organizations [not null]
+  orgId String [not null]
+  reviews reviews [not null]
+  bookings bookings [not null]
+}
+
+Table reviews {
+  id String [pk]
+  description String [not null]
+  star Int [not null]
+  createdAt DateTime [default: `now()`, not null]
+  modifiedAt DateTime [not null]
+  user users [not null]
+  userId String [not null]
+  event events [not null]
+  eventId String [not null]
+}
+
+Table bookings {
+  id String [pk]
+  qty Int [not null]
+  status BookingStatus [not null, default: 'ACTIVE']
+  createdAt DateTime [default: `now()`, not null]
+  modifiedAt DateTime [not null]
+  user users [not null]
+  userId String [not null]
+  event events [not null]
+  eventId String [not null]
+  organization organizations [not null]
+  orgId String [not null]
+  priceId String [not null]
+  timingId String [not null]
+}
+
+Enum Role {
+  USER
+  ADMIN
+  ORGANIZATION
+}
+
+Enum BookingStatus {
+  ACTIVE
+  CANCELED
+}
+
+Ref: users.orgId > organizations.id
+
+Ref: user_tokens.userId > users.id
+
+Ref: events.orgId > organizations.id
+
+Ref: reviews.userId > users.id
+
+Ref: reviews.eventId > events.id
+
+Ref: bookings.userId > users.id
+
+Ref: bookings.eventId > events.id
+
+Ref: bookings.orgId > organizations.id
