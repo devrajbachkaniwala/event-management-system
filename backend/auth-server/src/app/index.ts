@@ -1,4 +1,4 @@
-export * from './auth';
-export * from './prisma';
-export * from './auth/strategies';
+export * from './dto';
+export * from './guards';
+export * from './modules';
 export * from './app.module';
