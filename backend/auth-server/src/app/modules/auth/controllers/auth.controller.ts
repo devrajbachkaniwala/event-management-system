@@ -1,4 +1,4 @@
-import { Body, Controller, Inject, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Inject, Post, UseGuards } from '@nestjs/common';
 import { IAuthService, authServiceToken } from '../services';
 import { LoginUserDto, RegisterUserDto, TokenDto, TokensDto } from '../dto';
 import {
@@ -8,8 +8,8 @@ import {
   UserDto
 } from 'src/app/dto';
 import { JwtAuthAccessGuard, JwtAuthRefreshGuard } from '../../../guards';
-import { Request } from 'express';
 import { LogoutUserDto } from '../dto/logout-user.dto';
+import { GetReqUser } from 'src/app/decorators';
 
 @Controller({ path: 'auth', version: '1' })
 export class AuthController {
@@ -48,19 +48,15 @@ export class AuthController {
   @Post('logout')
   @UseGuards(JwtAuthAccessGuard)
   async logout(
-    @Req() req: Request,
+    @GetReqUser() reqUser: { user: UserDto; jti: string },
     @Body() logoutUserDto: LogoutUserDto
   ): Promise<ResSuccessDto<{ message: string }>> {
-    const user = req.user as typeof req.user & {
-      user: UserDto;
-      jti: string;
-    };
     let isLogout = false;
 
     try {
       isLogout = await this.authService.logout(
-        user.user?.id,
-        user.jti,
+        reqUser.user.id,
+        reqUser.jti,
         logoutUserDto
       );
     } catch (err: any) {
@@ -76,15 +72,13 @@ export class AuthController {
 
   @Post('token')
   @UseGuards(JwtAuthRefreshGuard)
-  async token(@Req() req: Request): Promise<ResSuccessDto<TokenDto>> {
-    const user = req.user as typeof req.user & {
-      user: UserDto;
-      jti: string;
-    };
+  async token(
+    @GetReqUser() reqUser: { user: UserDto; jti: string }
+  ): Promise<ResSuccessDto<TokenDto>> {
     let token: TokenDto = null;
 
     try {
-      token = await this.authService.token(user.user, user.jti);
+      token = await this.authService.token(reqUser.user, reqUser.jti);
     } catch (err: any) {
       throw ResErrorDtoFactory.create(err);
     }
