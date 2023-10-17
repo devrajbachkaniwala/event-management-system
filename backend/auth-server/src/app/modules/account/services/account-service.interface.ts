@@ -5,6 +5,7 @@ export const accountServiceToken = Symbol('accountServiceToken');
 export interface IAccountService {
   updateUserProfile(
     userId: string,
-    updateUserProfile: UpdateUserProfileDto
+    updateUserProfile: UpdateUserProfileDto,
+    userPhotoFile: Express.Multer.File
   ): Promise<UserDto>;
 }

@@ -4,25 +4,33 @@ import { IPrismaService, prismaServiceToken } from '../../prisma';
 import { UpdateUserProfileDto } from '../dto';
 import { UserDto, UserDtoFactory } from 'src/app/dto';
 import { AccountErrorFactory } from '../errors';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AccountService implements IAccountService {
   constructor(
-    @Inject(prismaServiceToken) private readonly prisma: IPrismaService
+    @Inject(prismaServiceToken) private readonly prisma: IPrismaService,
+    private readonly configService: ConfigService
   ) {}
 
   async updateUserProfile(
     userId: string,
-    updateUserProfile: UpdateUserProfileDto
+    updateUserProfile: UpdateUserProfileDto,
+    userPhotoFile: Express.Multer.File
   ): Promise<UserDto> {
     try {
+      const photoUrl = userPhotoFile
+        ? this.generatePhotoUrl(userPhotoFile.filename)
+        : undefined;
+
       const user = await this.prisma.user.update({
         where: {
           id: userId
         },
         data: {
           fullName: updateUserProfile.fullName,
-          username: updateUserProfile.username
+          username: updateUserProfile.username,
+          userPhotoUrl: photoUrl
         }
       });
 
@@ -30,5 +38,11 @@ export class AccountService implements IAccountService {
     } catch (err: any) {
       throw AccountErrorFactory.create(err, 'Failed to update user profile');
     }
+  }
+
+  private generatePhotoUrl(filename: string): string {
+    return `${this.configService.get(
+      'AUTH_SERVER_URL'
+    )}/v1/account/user-photos/${filename}`;
   }
 }
