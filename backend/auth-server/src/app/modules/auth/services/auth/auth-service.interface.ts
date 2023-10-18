@@ -4,7 +4,10 @@ import { LogoutUserDto } from '../../dto/logout-user.dto';
 
 export const authServiceToken = Symbol('authServiceToken');
 export interface IAuthService {
-  register(registerUserDto: RegisterUserDto): Promise<UserDto>;
+  register(
+    registerUserDto: RegisterUserDto,
+    userPhotoFile: Express.Multer.File
+  ): Promise<UserDto>;
   login(loginUserDto: LoginUserDto): Promise<TokensDto>;
   logout(
     userId: string,

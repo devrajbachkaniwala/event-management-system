@@ -40,6 +40,20 @@ export class AccountService implements IAccountService {
     }
   }
 
+  async getUserProfile(userId: string): Promise<UserDto> {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: {
+          id: userId
+        }
+      });
+
+      return UserDtoFactory.create(user);
+    } catch (err: any) {
+      throw AccountErrorFactory.create(err, 'Failed to get user profile');
+    }
+  }
+
   private generatePhotoUrl(filename: string): string {
     return `${this.configService.get(
       'AUTH_SERVER_URL'

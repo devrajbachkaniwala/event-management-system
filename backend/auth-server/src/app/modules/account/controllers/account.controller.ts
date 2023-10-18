@@ -1,10 +1,13 @@
 import {
   Body,
   Controller,
+  FileTypeValidator,
   Get,
   Inject,
+  MaxFileSizeValidator,
   Param,
-  Post,
+  ParseFilePipe,
+  Put,
   Res,
   UploadedFile,
   UseGuards,
@@ -28,12 +31,12 @@ export class AccountController {
     private readonly accountService: IAccountService
   ) {}
 
-  @Post('update-user-profile')
+  @Put('user-profile/update')
   @UseGuards(JwtAuthAccessGuard)
   @UseInterceptors(
     FileInterceptor('photo', {
       storage: diskStorage({
-        destination: './uploads/user-profiles',
+        destination: './uploads/user-photos',
         filename: (req, file, callback) => {
           const name = v4();
           const ext = extname(file.originalname);
@@ -44,10 +47,24 @@ export class AccountController {
       })
     })
   )
-  async userProfile(
+  async updateUserProfile(
     @GetReqUser() reqUser: { user: UserDto; jti: string },
     @Body() updateUserProfile: UpdateUserProfileDto,
-    @UploadedFile() file: Express.Multer.File
+    @UploadedFile(
+      new ParseFilePipe({
+        fileIsRequired: false,
+        validators: [
+          new MaxFileSizeValidator({
+            maxSize: 80000,
+            message: 'Photo cannot exceed 80kb'
+          }),
+          new FileTypeValidator({
+            fileType: /.(jpg|jpeg|png)$/
+          })
+        ]
+      })
+    )
+    file: Express.Multer.File
   ) {
     let userDto: UserDto = null;
     try {
@@ -63,11 +80,25 @@ export class AccountController {
     return ResSuccessDtoFactory.create(userDto);
   }
 
+  @Get('user-profile')
+  @UseGuards(JwtAuthAccessGuard)
+  async getUserProfile(@GetReqUser() reqUser: { user: UserDto; jti: string }) {
+    let userDto: UserDto = null;
+
+    try {
+      userDto = await this.accountService.getUserProfile(reqUser.user.id);
+    } catch (err: any) {
+      throw ResErrorDtoFactory.create(err, 'Failed to get user profile');
+    }
+
+    return ResSuccessDtoFactory.create(userDto);
+  }
+
   @Get('user-photos/:filename')
   getUserPhotoByFilename(
     @Param('filename') filename: string,
     @Res() res: Response
   ) {
-    res.sendFile(filename, { root: './uploads/user-profiles' });
+    res.sendFile(filename, { root: './uploads/user-photos' });
   }
 }

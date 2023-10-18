@@ -25,6 +25,7 @@ import {
   uuidServiceToken
 } from 'src/app/modules/shared';
 import { UserDto, UserDtoFactory } from 'src/app/dto';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService implements IAuthService {
@@ -34,10 +35,14 @@ export class AuthService implements IAuthService {
     private readonly tokenService: IJwtTokenService,
     @Inject(uuidServiceToken) private readonly uuidService: IUuidService,
     @Inject(encryptServiceToken)
-    private readonly encryptService: IEncryptService
+    private readonly encryptService: IEncryptService,
+    private readonly configService: ConfigService
   ) {}
 
-  async register(userDto: RegisterUserDto): Promise<UserDto> {
+  async register(
+    userDto: RegisterUserDto,
+    userPhotoFile: Express.Multer.File
+  ): Promise<UserDto> {
     try {
       const userEmailExist: User = await this.prisma.user.findUnique({
         where: {
@@ -48,6 +53,10 @@ export class AuthService implements IAuthService {
       if (userEmailExist) {
         throw new UserEmailAlreadyExists();
       }
+
+      const photoUrl = userPhotoFile
+        ? this.generatePhotoUrl(userPhotoFile.filename)
+        : undefined;
 
       const isAdmin: boolean = userDto.email.endsWith('@admin.com');
 
@@ -63,7 +72,8 @@ export class AuthService implements IAuthService {
           username: userDto.username,
           email: userDto.email,
           password: userDto.password,
-          role: isAdmin ? Role.ADMIN : undefined
+          role: isAdmin ? Role.ADMIN : undefined,
+          userPhotoUrl: photoUrl
         }
       });
 
@@ -257,5 +267,11 @@ export class AuthService implements IAuthService {
     });
 
     return !!userTokenExists;
+  }
+
+  private generatePhotoUrl(filename: string): string {
+    return `${this.configService.get(
+      'AUTH_SERVER_URL'
+    )}/v1/account/user-photos/${filename}`;
   }
 }

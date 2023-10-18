@@ -8,4 +8,5 @@ export interface IAccountService {
     updateUserProfile: UpdateUserProfileDto,
     userPhotoFile: Express.Multer.File
   ): Promise<UserDto>;
+  getUserProfile(userId: string): Promise<UserDto>;
 }
