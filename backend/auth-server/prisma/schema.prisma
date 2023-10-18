@@ -43,7 +43,8 @@ model User {
 enum Role {
   USER
   ADMIN
-  ORGANIZATION
+  ORGANIZATION_CREATOR
+  TEAM_MEMBER
 }
 
 model UserToken {
