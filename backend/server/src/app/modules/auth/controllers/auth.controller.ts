@@ -24,8 +24,8 @@ import {
   ResSuccessDtoFactory,
   UserDto
 } from 'src/app/dto';
-import { JwtAuthAccessGuard, JwtAuthRefreshGuard } from '../../../guards';
-import { GetReqUser } from 'src/app/decorators';
+import { JwtAuthRefreshGuard } from '../../../guards';
+import { GetReqUser, Public } from 'src/app/decorators';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { v4 } from 'uuid';
@@ -38,6 +38,7 @@ export class AuthController {
   ) {}
 
   @Post('register')
+  @Public()
   @UseInterceptors(
     FileInterceptor('photo', {
       storage: diskStorage({
@@ -81,6 +82,7 @@ export class AuthController {
   }
 
   @Post('login')
+  @Public()
   async login(
     @Body() loginUserDto: LoginUserDto
   ): Promise<ResSuccessDto<TokensDto>> {
@@ -95,7 +97,6 @@ export class AuthController {
   }
 
   @Post('logout')
-  @UseGuards(JwtAuthAccessGuard)
   async logout(
     @GetReqUser() reqUser: { user: UserDto; jti: string },
     @Body() logoutUserDto: LogoutUserDto
@@ -120,6 +121,7 @@ export class AuthController {
   }
 
   @Post('token')
+  @Public()
   @UseGuards(JwtAuthRefreshGuard)
   async token(
     @GetReqUser() reqUser: { user: UserDto; jti: string }

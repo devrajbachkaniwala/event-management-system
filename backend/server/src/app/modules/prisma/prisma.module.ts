@@ -1,14 +1,14 @@
 import { Global, Module, Provider } from '@nestjs/common';
-import { PrismaService, prismaServiceToken } from './services';
+import { PrismaApiService, prismaApiServiceToken } from './services';
 
-const prismaServiceProvider: Provider = {
-  provide: prismaServiceToken,
-  useClass: PrismaService
+const prismaApiServiceProvider: Provider = {
+  provide: prismaApiServiceToken,
+  useClass: PrismaApiService
 };
 
 @Global()
 @Module({
-  providers: [prismaServiceProvider],
-  exports: [prismaServiceProvider]
+  providers: [prismaApiServiceProvider],
+  exports: [prismaApiServiceProvider]
 })
 export class PrismaModule {}

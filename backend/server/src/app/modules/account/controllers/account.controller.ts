@@ -7,13 +7,11 @@ import {
   MaxFileSizeValidator,
   Param,
   ParseFilePipe,
-  Put,
+  Patch,
   Res,
   UploadedFile,
-  UseGuards,
   UseInterceptors
 } from '@nestjs/common';
-import { JwtAuthAccessGuard } from 'src/app/guards';
 import { IAccountService, accountServiceToken } from '../services';
 import { ResErrorDtoFactory, ResSuccessDtoFactory, UserDto } from 'src/app/dto';
 import { Response } from 'express';
@@ -22,7 +20,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { v4 } from 'uuid';
-import { GetReqUser } from 'src/app/decorators';
+import { GetReqUser, Public } from 'src/app/decorators';
 
 @Controller({ path: 'account', version: '1' })
 export class AccountController {
@@ -31,8 +29,7 @@ export class AccountController {
     private readonly accountService: IAccountService
   ) {}
 
-  @Put('user-profile/update')
-  @UseGuards(JwtAuthAccessGuard)
+  @Patch('user-profile/update')
   @UseInterceptors(
     FileInterceptor('photo', {
       storage: diskStorage({
@@ -81,7 +78,6 @@ export class AccountController {
   }
 
   @Get('user-profile')
-  @UseGuards(JwtAuthAccessGuard)
   async getUserProfile(@GetReqUser() reqUser: { user: UserDto; jti: string }) {
     let userDto: UserDto = null;
 
@@ -95,6 +91,7 @@ export class AccountController {
   }
 
   @Get('user-photos/:filename')
+  @Public()
   getUserPhotoByFilename(
     @Param('filename') filename: string,
     @Res() res: Response

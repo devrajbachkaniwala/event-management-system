@@ -7,7 +7,8 @@ import {
   PrismaModule,
   SharedModule
 } from './modules';
-import { APP_PIPE } from '@nestjs/core';
+import { APP_GUARD, APP_PIPE } from '@nestjs/core';
+import { JwtAuthAccessGuard } from './guards';
 
 @Module({
   imports: [
@@ -26,6 +27,10 @@ import { APP_PIPE } from '@nestjs/core';
       useFactory: () => {
         return new ValidationPipe({ transform: true });
       }
+    },
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthAccessGuard
     }
   ]
 })

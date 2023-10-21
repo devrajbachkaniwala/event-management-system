@@ -1,6 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { IAuthService } from './auth-service.interface';
-import { IPrismaService, prismaServiceToken } from 'src/app/modules/prisma';
 import { IJwtTokenService, jwtTokenServiceToken } from '../jwt-token';
 import {
   LoginUserDto,
@@ -14,6 +13,8 @@ import {
 import {
   AuthErrorFactory,
   InvalidPassword,
+  TokenExpired,
+  DisabledUserAccount,
   UserEmailAlreadyExists,
   UserNotFound
 } from '../../errors';
@@ -26,11 +27,15 @@ import {
 } from 'src/app/modules/shared';
 import { UserDto, UserDtoFactory } from 'src/app/dto';
 import { ConfigService } from '@nestjs/config';
+import {
+  IPrismaApiService,
+  prismaApiServiceToken
+} from 'src/app/modules/prisma';
 
 @Injectable()
 export class AuthService implements IAuthService {
   constructor(
-    @Inject(prismaServiceToken) private readonly prisma: IPrismaService,
+    @Inject(prismaApiServiceToken) private readonly prisma: IPrismaApiService,
     @Inject(jwtTokenServiceToken)
     private readonly tokenService: IJwtTokenService,
     @Inject(uuidServiceToken) private readonly uuidService: IUuidService,
@@ -94,6 +99,10 @@ export class AuthService implements IAuthService {
 
       if (!userExists) {
         throw new UserNotFound();
+      }
+
+      if (!userExists.isActive) {
+        throw new DisabledUserAccount();
       }
 
       const isPasswordValid = await this.encryptService.compare(
@@ -234,39 +243,74 @@ export class AuthService implements IAuthService {
     }
   }
 
-  async validateAccessJti(userId: string, jti: string): Promise<boolean> {
-    const userTokenExists = await this.prisma.user.findUnique({
-      where: {
-        id: userId,
-        tokens: {
-          some: {
-            accessToken: jti,
-            accessTokenExpiredAt: {
-              gt: new Date()
+  async validateUserAccessJti(userId: string, jti: string): Promise<UserDto> {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: {
+          id: userId,
+          tokens: {
+            some: {
+              accessToken: jti
             }
           }
+        },
+        include: {
+          tokens: true
         }
-      }
-    });
+      });
 
-    return !!userTokenExists;
+      if (!user) {
+        throw new UserNotFound();
+      }
+
+      if (!user.isActive) {
+        throw new DisabledUserAccount();
+      }
+
+      if (user.tokens.at(0).accessTokenExpiredAt.getTime() <= Date.now()) {
+        throw new TokenExpired();
+      }
+
+      return UserDtoFactory.create(user);
+    } catch (err: any) {
+      console.log(err);
+      throw AuthErrorFactory.create(err, 'Failed to validate user access jti');
+    }
   }
-  async validateRefreshJti(userId: string, jti: string): Promise<boolean> {
-    const userTokenExists = await this.prisma.user.findUnique({
-      where: {
-        id: userId,
-        tokens: {
-          some: {
-            refreshToken: jti,
-            refreshTokenExpiredAt: {
-              gt: new Date()
+
+  async validateUserRefreshJti(userId: string, jti: string): Promise<UserDto> {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: {
+          id: userId,
+          tokens: {
+            some: {
+              refreshToken: jti
             }
           }
+        },
+        include: {
+          tokens: true
         }
-      }
-    });
+      });
 
-    return !!userTokenExists;
+      if (!user) {
+        throw new UserNotFound();
+      }
+
+      if (!user.isActive) {
+        throw new DisabledUserAccount();
+      }
+
+      if (user.tokens.at(0).refreshTokenExpiredAt.getTime() <= Date.now()) {
+        throw new TokenExpired();
+      }
+
+      return UserDtoFactory.create(user);
+    } catch (err: any) {
+      console.log(err);
+      throw AuthErrorFactory.create(err, 'Failed to validate user refresh jti');
+    }
   }
 
   private generatePhotoUrl(filename: string): string {

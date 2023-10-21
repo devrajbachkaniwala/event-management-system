@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, Provider } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { JwtAccessStrategy, JwtRefreshStrategy } from './strategies';
@@ -10,6 +10,16 @@ import {
 } from './services';
 import { AuthController } from './controllers';
 
+const jwtTokenServiceProvider: Provider = {
+  provide: jwtTokenServiceToken,
+  useClass: JwtTokenService
+};
+
+const authServiceProvider: Provider = {
+  provide: authServiceToken,
+  useClass: AuthService
+};
+
 @Module({
   imports: [
     PassportModule,
@@ -18,8 +28,8 @@ import { AuthController } from './controllers';
   providers: [
     JwtAccessStrategy,
     JwtRefreshStrategy,
-    { provide: jwtTokenServiceToken, useClass: JwtTokenService },
-    { provide: authServiceToken, useClass: AuthService }
+    jwtTokenServiceProvider,
+    authServiceProvider
   ],
   controllers: [AuthController]
 })

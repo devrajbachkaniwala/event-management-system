@@ -1,4 +1,4 @@
-import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
@@ -27,13 +27,15 @@ export class JwtRefreshStrategy extends PassportStrategy(
     iat: number;
     exp: number;
   }) {
-    const validateJti = await this.authService.validateRefreshJti(
-      payload.user.id,
-      payload.jti
-    );
-
-    if (!validateJti) {
-      throw new UnauthorizedException();
+    try {
+      const userDto = await this.authService.validateUserRefreshJti(
+        payload.user.id,
+        payload.jti
+      );
+      payload.user = userDto;
+    } catch (err: any) {
+      console.log(err);
+      throw err;
     }
 
     return payload;

@@ -1,15 +1,14 @@
 import { Module, Provider } from '@nestjs/common';
 import { OrganizationsController } from './controllers';
-import { organizationsServiceToken } from './services/organizations-service.interface';
-import { OrganizationsService } from './services';
+import { OrganizationsService, organizationsServiceToken } from './services';
 
 const organizationsServiceProvider: Provider = {
   provide: organizationsServiceToken,
-  useClass: OrganizationsService,
+  useClass: OrganizationsService
 };
 
 @Module({
   controllers: [OrganizationsController],
-  providers: [organizationsServiceProvider],
+  providers: [organizationsServiceProvider]
 })
 export class OrganizationsModule {}

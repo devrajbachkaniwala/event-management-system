@@ -1,2 +1,2 @@
-export * from './prisma-service.interface';
-export * from './prisma.service';
+export * from './prisma-api-service.interface';
+export * from './prisma-api.service';

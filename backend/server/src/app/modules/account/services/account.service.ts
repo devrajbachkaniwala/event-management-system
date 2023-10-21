@@ -1,15 +1,15 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { IAccountService } from './account-service.interface';
-import { IPrismaService, prismaServiceToken } from '../../prisma';
 import { UpdateUserProfileDto } from '../dto';
 import { UserDto, UserDtoFactory } from 'src/app/dto';
 import { AccountErrorFactory } from '../errors';
 import { ConfigService } from '@nestjs/config';
+import { IPrismaApiService, prismaApiServiceToken } from '../../prisma';
 
 @Injectable()
 export class AccountService implements IAccountService {
   constructor(
-    @Inject(prismaServiceToken) private readonly prisma: IPrismaService,
+    @Inject(prismaApiServiceToken) private readonly prisma: IPrismaApiService,
     private readonly configService: ConfigService
   ) {}
 

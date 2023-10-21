@@ -6,13 +6,19 @@ import {
   Patch,
   Param,
   Delete,
-  Inject
+  Inject,
+  UseGuards
 } from '@nestjs/common';
 import {
-  IOrganizationsService,
-  organizationsServiceToken
-} from '../services/organizations-service.interface';
-import { CreateOrganizationDto, UpdateOrganizationDto } from '../dto';
+  CreateOrganizationDto,
+  OrganizationDto,
+  UpdateOrganizationDto
+} from '../dto';
+import { ResErrorDtoFactory, ResSuccessDtoFactory, UserDto } from 'src/app/dto';
+import { GetReqUser, Roles } from 'src/app/decorators';
+import { IOrganizationsService, organizationsServiceToken } from '../services';
+import { Role } from '@prisma/client';
+import { RoleGuard } from 'src/app/guards';
 
 @Controller({ path: 'organizations', version: '1' })
 export class OrganizationsController {
@@ -21,9 +27,24 @@ export class OrganizationsController {
     private readonly organizationsService: IOrganizationsService
   ) {}
 
-  @Post()
-  create(@Body() createOrganizationDto: CreateOrganizationDto) {
-    return this.organizationsService.create(createOrganizationDto);
+  @Post('create')
+  @Roles([Role.USER])
+  @UseGuards(RoleGuard)
+  async create(
+    @GetReqUser() reqUser: { user: UserDto; jti: string },
+    @Body() createOrganizationDto: CreateOrganizationDto
+  ) {
+    let organizationDto: OrganizationDto = null;
+    try {
+      organizationDto = await this.organizationsService.create(
+        reqUser.user.id,
+        createOrganizationDto
+      );
+    } catch (err: any) {
+      throw ResErrorDtoFactory.create(err, 'Failed to create an organization');
+    }
+
+    return ResSuccessDtoFactory.create(organizationDto);
   }
 
   @Get()
@@ -31,21 +52,53 @@ export class OrganizationsController {
     return this.organizationsService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.organizationsService.findOne(+id);
+  @Get(':organizationId')
+  async findOne(@Param('organizationId') orgId: string) {
+    let organizationDto: OrganizationDto = null;
+    try {
+      organizationDto = await this.organizationsService.findOne(orgId);
+    } catch (err: any) {
+      throw ResErrorDtoFactory.create(err, 'Failed to get an organization');
+    }
+
+    return ResSuccessDtoFactory.create(organizationDto);
   }
 
-  @Patch(':id')
-  update(
-    @Param('id') id: string,
+  @Patch(':organizationId/update')
+  async update(
+    @Param('organizationId') orgId: string,
     @Body() updateOrganizationDto: UpdateOrganizationDto
   ) {
-    return this.organizationsService.update(+id, updateOrganizationDto);
+    let organizationDto: OrganizationDto = null;
+    try {
+      organizationDto = await this.organizationsService.update(
+        orgId,
+        updateOrganizationDto
+      );
+    } catch (err: any) {
+      throw ResErrorDtoFactory.create(err, 'Failed to update an organization');
+    }
+
+    return ResSuccessDtoFactory.create(organizationDto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.organizationsService.remove(+id);
+  @Delete(':organizationId/delete')
+  async remove(
+    @Param('organizationId') orgId: string,
+    @GetReqUser() reqUser: { user: UserDto; jti: string }
+  ) {
+    let isRemoved: boolean = false;
+    try {
+      isRemoved = await this.organizationsService.remove(
+        reqUser.user.id,
+        orgId
+      );
+    } catch (err: any) {
+      throw ResErrorDtoFactory.create(err, 'Failed to remove an organization');
+    }
+
+    return ResSuccessDtoFactory.create({
+      message: 'Successfully removed an organization'
+    });
   }
 }

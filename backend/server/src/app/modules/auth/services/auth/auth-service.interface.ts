@@ -1,6 +1,11 @@
 import { UserDto } from 'src/app/dto';
-import { TokenDto, LoginUserDto, RegisterUserDto, TokensDto } from '../../dto';
-import { LogoutUserDto } from '../../dto/logout-user.dto';
+import {
+  TokenDto,
+  LoginUserDto,
+  RegisterUserDto,
+  TokensDto,
+  LogoutUserDto
+} from '../../dto';
 
 export const authServiceToken = Symbol('authServiceToken');
 export interface IAuthService {
@@ -15,6 +20,6 @@ export interface IAuthService {
     logoutUserDto: LogoutUserDto
   ): Promise<true>;
   token(userDto: UserDto, refreshJti: string): Promise<TokenDto>;
-  validateAccessJti(userId: string, jti: string): Promise<boolean>;
-  validateRefreshJti(userId: string, jti: string): Promise<boolean>;
+  validateUserAccessJti(userId: string, jti: string): Promise<UserDto>;
+  validateUserRefreshJti(userId: string, jti: string): Promise<UserDto>;
 }
