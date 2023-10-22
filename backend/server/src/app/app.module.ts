@@ -3,7 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import {
   AccountModule,
   AuthModule,
-  OrganizationsModule,
+  OrganizationModule,
   PrismaModule,
   SharedModule
 } from './modules';
@@ -19,7 +19,7 @@ import { JwtAuthAccessGuard } from './guards';
     SharedModule,
     AuthModule,
     AccountModule,
-    OrganizationsModule
+    OrganizationModule
   ],
   providers: [
     {

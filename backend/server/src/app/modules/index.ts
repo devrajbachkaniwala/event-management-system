@@ -1,5 +1,5 @@
 export * from './account';
 export * from './auth';
-export * from './organizations';
+export * from './organization';
 export * from './prisma';
 export * from './shared';

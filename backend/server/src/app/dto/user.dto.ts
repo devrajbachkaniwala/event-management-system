@@ -10,6 +10,7 @@ export class UserDto {
   isActive: boolean;
   createdAt: Date;
   modifiedAt: Date;
+  orgId: string;
 }
 
 export class UserDtoFactory {
@@ -24,6 +25,7 @@ export class UserDtoFactory {
     userDto.role = userData.role;
     userDto.createdAt = userData.createdAt;
     userDto.modifiedAt = userData.modifiedAt;
+    userDto.orgId = userData.orgId;
 
     return userDto;
   }

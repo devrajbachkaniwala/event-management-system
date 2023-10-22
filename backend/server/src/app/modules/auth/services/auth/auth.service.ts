@@ -247,15 +247,14 @@ export class AuthService implements IAuthService {
     try {
       const user = await this.prisma.user.findUnique({
         where: {
-          id: userId,
+          id: userId
+        },
+        include: {
           tokens: {
-            some: {
+            where: {
               accessToken: jti
             }
           }
-        },
-        include: {
-          tokens: true
         }
       });
 
@@ -282,15 +281,14 @@ export class AuthService implements IAuthService {
     try {
       const user = await this.prisma.user.findUnique({
         where: {
-          id: userId,
+          id: userId
+        },
+        include: {
           tokens: {
-            some: {
+            where: {
               refreshToken: jti
             }
           }
-        },
-        include: {
-          tokens: true
         }
       });
 
