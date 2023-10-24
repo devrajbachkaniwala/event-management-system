@@ -20,6 +20,7 @@ export class EventTimingsController {
 
   @Post()
   create(@Body() createEventTimingDto: CreateEventTimingDto) {
+    console.log(createEventTimingDto);
     return this.eventTimingsService.create(createEventTimingDto);
   }
 
