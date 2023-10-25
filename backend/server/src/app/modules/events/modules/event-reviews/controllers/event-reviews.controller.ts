@@ -5,12 +5,15 @@ import {
   Body,
   Param,
   Delete,
-  Inject
+  Inject,
+  UseGuards
 } from '@nestjs/common';
 import { IEventReviewsService, eventReviewsServiceToken } from '../services';
 import { CreateEventReviewDto, EventReviewDto } from '../dto';
-import { GetUserId } from 'src/app/decorators';
+import { GetUserId, Public, Roles } from 'src/app/decorators';
 import { ResErrorDtoFactory, ResSuccessDtoFactory } from 'src/app/dto';
+import { Role } from '@prisma/client';
+import { RoleGuard } from 'src/app/guards';
 
 @Controller({ path: 'reviews', version: '1' })
 export class EventReviewsController {
@@ -20,6 +23,8 @@ export class EventReviewsController {
   ) {}
 
   @Post()
+  @Roles([Role.USER, Role.TEAM_MEMBER])
+  @UseGuards(RoleGuard)
   async create(
     @GetUserId() userId: string,
     @Param('event_id') eventId: string,
@@ -40,6 +45,7 @@ export class EventReviewsController {
   }
 
   @Get()
+  @Public()
   async findAll(@Param('event_id') eventId: string) {
     let reviews: EventReviewDto[] = null;
     try {
@@ -52,6 +58,7 @@ export class EventReviewsController {
   }
 
   @Get(':review_id')
+  @Public()
   async findOne(
     @Param('event_id') eventId: string,
     @Param('review_id') reviewId: string
@@ -75,6 +82,8 @@ export class EventReviewsController {
   // }
 
   @Delete(':review_id')
+  @Roles([Role.USER, Role.TEAM_MEMBER])
+  @UseGuards(RoleGuard)
   async remove(
     @GetUserId() userId: string,
     @Param('event_id') eventId: string,
