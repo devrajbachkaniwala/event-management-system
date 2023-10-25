@@ -76,6 +76,10 @@ Table reviews {
   userId String [not null]
   event events [not null]
   eventId String [not null]
+
+  indexes {
+    (userId, eventId) [unique]
+  }
 }
 
 Table bookings {

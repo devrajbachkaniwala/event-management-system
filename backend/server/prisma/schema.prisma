@@ -143,6 +143,7 @@ model Review {
   event   Event  @relation(fields: [eventId], references: [id])
   eventId String @db.ObjectId
 
+  @@unique([userId, eventId])
   @@map("reviews")
 }
 
