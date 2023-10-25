@@ -3,8 +3,8 @@ import { EventTiming } from '@prisma/client';
 export class EventTimingDto {
   id: string;
   date: Date;
-  startTime: Date;
-  endTime: Date;
+  startTime: string;
+  endTime: string;
 }
 
 export class EventTimingDtoFactory {

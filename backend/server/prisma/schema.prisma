@@ -118,8 +118,8 @@ type EventPhoto {
 type EventTiming {
   id        String   @default(uuid())
   date      DateTime
-  startTime DateTime
-  endTime   DateTime
+  startTime String
+  endTime   String
 }
 
 type EventPrice {

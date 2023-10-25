@@ -1,10 +1,23 @@
-import { CreateEventTimingDto, UpdateEventTimingDto } from '../dto';
+import {
+  CreateEventTimingDto,
+  EventTimingDto,
+  UpdateEventTimingDto
+} from '../dto';
 
 export const eventTimingsServiceToken = Symbol('eventTimingsServiceToken');
 export interface IEventTimingsService {
-  create(createEventTimingDto: CreateEventTimingDto): unknown;
-  findAll(): unknown;
-  findOne(arg0: number): unknown;
-  update(arg0: number, updateEventTimingDto: UpdateEventTimingDto): unknown;
-  remove(arg0: number): unknown;
+  create(
+    orgId: string,
+    eventId: string,
+    createEventTimingDto: CreateEventTimingDto
+  ): Promise<EventTimingDto>;
+  findAll(eventId: string): Promise<EventTimingDto[]>;
+  findOne(eventId: string, timingId: string): Promise<EventTimingDto>;
+  update(
+    orgId: string,
+    eventId: string,
+    timingId: string,
+    updateEventTimingDto: UpdateEventTimingDto
+  ): Promise<EventTimingDto>;
+  remove(orgId: string, eventId: string, timingId: string): Promise<boolean>;
 }
