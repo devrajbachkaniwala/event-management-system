@@ -7,7 +7,8 @@ import {
   EventsModule,
   OrganizationModule,
   PrismaModule,
-  SharedModule
+  SharedModule,
+  UsersModule
 } from './modules';
 import { APP_GUARD, APP_PIPE } from '@nestjs/core';
 import { JwtAuthAccessGuard } from './guards';
@@ -23,7 +24,8 @@ import { JwtAuthAccessGuard } from './guards';
     AccountModule,
     OrganizationModule,
     EventsModule,
-    BookingsModule
+    BookingsModule,
+    UsersModule
   ],
   providers: [
     {

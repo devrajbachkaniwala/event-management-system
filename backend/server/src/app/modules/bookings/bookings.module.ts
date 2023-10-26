@@ -9,6 +9,7 @@ const bookingsServiceProvider: Provider = {
 
 @Module({
   controllers: [BookingsController],
-  providers: [bookingsServiceProvider]
+  providers: [bookingsServiceProvider],
+  exports: [bookingsServiceProvider]
 })
 export class BookingsModule {}

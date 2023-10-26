@@ -5,3 +5,4 @@ export * from './events';
 export * from './organization';
 export * from './prisma';
 export * from './shared';
+export * from './users';
