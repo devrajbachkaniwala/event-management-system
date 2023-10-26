@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import {
   AccountModule,
   AuthModule,
+  BookingsModule,
   EventsModule,
   OrganizationModule,
   PrismaModule,
@@ -21,7 +22,8 @@ import { JwtAuthAccessGuard } from './guards';
     AuthModule,
     AccountModule,
     OrganizationModule,
-    EventsModule
+    EventsModule,
+    BookingsModule
   ],
   providers: [
     {

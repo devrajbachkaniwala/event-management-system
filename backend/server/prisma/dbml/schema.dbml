@@ -107,7 +107,7 @@ Enum Role {
 
 Enum BookingStatus {
   ACTIVE
-  CANCELED
+  CANCEL
 }
 
 Ref: users.orgId > organizations.id
