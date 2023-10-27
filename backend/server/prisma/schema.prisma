@@ -90,7 +90,6 @@ model Event {
   country     String
   venue       String
   category    String
-  // geoLatLng String
 
   photos  EventPhoto[]
   timings EventTiming[]
@@ -104,9 +103,6 @@ model Event {
   reviews      Review[]
   bookings     Booking[]
 
-  @@unique([photos.id])
-  @@unique([timings.id])
-  @@unique([prices.id])
   @@map("events")
 }
 

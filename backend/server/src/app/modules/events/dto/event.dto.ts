@@ -1,4 +1,5 @@
-import { Event, EventPhoto, EventPrice, EventTiming } from '@prisma/client';
+import { Event } from '@prisma/client';
+import { EventPhotoDto, EventPriceDto, EventTimingDto } from '../modules';
 
 export class EventDto {
   id: string;
@@ -12,9 +13,9 @@ export class EventDto {
   createdAt: Date;
   modifiedAt: Date;
   orgId: string;
-  photos: EventPhoto[];
-  timings: EventTiming[];
-  prices: EventPrice[];
+  photos: EventPhotoDto[];
+  timings: EventTimingDto[];
+  prices: EventPriceDto[];
 }
 
 export class EventDtoFactory {

@@ -99,9 +99,9 @@ export class BookingsController {
     @Param('booking_id') bookingId: string
     // @Body() updateBookingDto: UpdateBookingDto
   ) {
-    let isBookingCanceled: boolean = false;
+    let isBookingCancelled: boolean = false;
     try {
-      isBookingCanceled = await this.bookingsService.cancelBooking(
+      isBookingCancelled = await this.bookingsService.cancelBooking(
         userId,
         bookingId
       );
@@ -109,7 +109,7 @@ export class BookingsController {
       throw ResErrorDtoFactory.create(err, 'Failed to cancel booking');
     }
     return ResSuccessDtoFactory.create({
-      message: 'Successfully canceled the booking'
+      message: 'Successfully cancelled the booking'
     });
   }
 
