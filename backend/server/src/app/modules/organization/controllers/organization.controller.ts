@@ -52,7 +52,7 @@ export class OrganizationController {
       })
     })
   )
-  @Post('create')
+  @Post()
   @Roles([Role.USER])
   @UseGuards(RoleGuard)
   async create(
@@ -116,7 +116,7 @@ export class OrganizationController {
       })
     })
   )
-  @Patch('update')
+  @Patch()
   @Roles([Role.TEAM_MEMBER])
   @UseGuards(RoleGuard)
   async update(
@@ -152,7 +152,7 @@ export class OrganizationController {
     return ResSuccessDtoFactory.create(organizationDto);
   }
 
-  @Delete('delete')
+  @Delete()
   @Roles([Role.ORGANIZATION_CREATOR])
   @UseGuards(RoleGuard)
   async remove(@GetReqUser() reqUser: { user: UserDto; jti: string }) {

@@ -55,6 +55,7 @@ export class OrganizationService implements IOrganizationService {
 
       return OrganizationDtoFactory.create(user.organization);
     } catch (err: any) {
+      console.log(err);
       throw OrganizationErrorFactory.create(
         err,
         'Failed to create an organization'

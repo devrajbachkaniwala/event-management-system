@@ -23,7 +23,7 @@ export class TeamMembersController {
     private readonly teamMembersService: ITeamMembersService
   ) {}
 
-  @Post('add')
+  @Post()
   @Roles([Role.TEAM_MEMBER])
   async addTeamMember(
     @Body() addTeamMemberDto: AddTeamMemberDto,
@@ -42,7 +42,7 @@ export class TeamMembersController {
     return ResSuccessDtoFactory.create(userDto);
   }
 
-  @Delete(':team_member_id/remove')
+  @Delete(':team_member_id')
   @Roles([Role.TEAM_MEMBER])
   async removeTeamMember(
     @Param('team_member_id') teamMemberId: string,

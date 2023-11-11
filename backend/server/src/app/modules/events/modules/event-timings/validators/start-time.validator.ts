@@ -20,9 +20,9 @@ export class StartTimeValidator implements ValidatorConstraintInterface {
       return false;
     }
 
-    const dateString = `${date.getFullYear()}-${
-      date.getMonth() + 1
-    }-${date.getDate()}`;
+    const dateString = `${date.getFullYear()}-${date.getMonth() + 1}-${
+      date.getDate().toString().length == 1 ? 0 : null
+    }${date.getDate()}`;
 
     const startDateTime = new Date(`${dateString}T${startTime}`);
     const endDateTime = new Date(`${dateString}T${endTime}`);

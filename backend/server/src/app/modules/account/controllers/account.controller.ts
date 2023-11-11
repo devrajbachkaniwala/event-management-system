@@ -29,7 +29,7 @@ export class AccountController {
     private readonly accountService: IAccountService
   ) {}
 
-  @Patch('user-profile/update')
+  @Patch('user-profile')
   @UseInterceptors(
     FileInterceptor('photo', {
       storage: diskStorage({
