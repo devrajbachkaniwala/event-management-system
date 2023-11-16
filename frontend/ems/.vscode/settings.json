@@ -1,3 +1,4 @@
 {
-    "git.openRepositoryInParentFolders": "always"
+    "git.openRepositoryInParentFolders": "always",
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
 }
