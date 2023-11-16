@@ -105,6 +105,9 @@ export class EventsService implements IEventsService {
       const event = await this.prisma.event.findUnique({
         where: {
           id: eventId
+        },
+        include: {
+          organization: true
         }
       });
 

@@ -1,5 +1,6 @@
-import { Event } from '@prisma/client';
+import { Event, Organization } from '@prisma/client';
 import { EventPhotoDto, EventPriceDto, EventTimingDto } from '../modules';
+import { OrganizationDto } from '../../organization';
 
 export class EventDto {
   id: string;
@@ -16,10 +17,11 @@ export class EventDto {
   photos: EventPhotoDto[];
   timings: EventTimingDto[];
   prices: EventPriceDto[];
+  organization?: OrganizationDto;
 }
 
 export class EventDtoFactory {
-  static create(event: Event): EventDto {
+  static create(event: Event & { organization?: Organization }): EventDto {
     const eventDto: EventDto = new EventDto();
 
     eventDto.id = event.id;
@@ -36,6 +38,7 @@ export class EventDtoFactory {
     eventDto.photos = event.photos;
     eventDto.timings = event.timings;
     eventDto.prices = event.prices;
+    eventDto.organization = event.organization;
 
     return eventDto;
   }

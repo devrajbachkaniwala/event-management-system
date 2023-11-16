@@ -18,14 +18,14 @@ export class FutureDateValidator implements ValidatorConstraintInterface {
       return false;
     }
 
-    const dateString = `${date.getFullYear()}-${
-      date.getMonth() + 1
-    }-${date.getDate()}`;
+    const dateString = `${date.getFullYear()}-${date.getMonth() + 1}-${
+      date.getDate().toString().length == 1 ? 0 : ''
+    }${date.getDate()}`;
 
     const curDate = new Date();
-    const curDateString = `${curDate.getFullYear()}-${
-      curDate.getMonth() + 1
-    }-${curDate.getDate()}`;
+    const curDateString = `${curDate.getFullYear()}-${curDate.getMonth() + 1}-${
+      curDate.getDate().toString().length == 1 ? 0 : ''
+    }${curDate.getDate()}`;
 
     return new Date(dateString).getTime() > new Date(curDateString).getTime();
   }

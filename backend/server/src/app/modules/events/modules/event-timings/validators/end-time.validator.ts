@@ -24,11 +24,17 @@ export class EndTimeValidator implements ValidatorConstraintInterface {
     }
 
     const dateString = `${date.getFullYear()}-${date.getMonth() + 1}-${
-      date.getDate().toString().length == 1 ? 0 : null
+      date.getDate().toString().length == 1 ? 0 : ''
     }${date.getDate()}`;
+
+    console.log(dateString);
 
     const startDateTime = new Date(`${dateString}T${startTime}`);
     const endDateTime = new Date(`${dateString}T${endTime}`);
+
+    console.log(`startTime: ${startDateTime}`);
+    console.log(`endTime: ${endDateTime}`);
+
     return endDateTime.getTime() > startDateTime.getTime();
   }
 
