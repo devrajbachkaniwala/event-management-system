@@ -1,13 +1,25 @@
 'use client';
 import { AuthService } from '@/services/auth-service';
 import { LocalStorageService } from '@/services/local-storage-service';
+import { getProfile } from '@/utils/getProfile';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useEffect, useState } from 'react';
 
 function Login() {
+  const [isLoading, setIsLoading] = useState(true);
   const [errMsg, setErrMsg] = useState<string>('');
   const router = useRouter();
+
+  useEffect(() => {
+    getProfile().then((user) => {
+      if (user) {
+        router.replace('/');
+      } else {
+        setIsLoading(false);
+      }
+    });
+  }, [router]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -32,6 +44,10 @@ function Login() {
       setErrMsg(err.message);
     }
   };
+
+  if (isLoading) {
+    return <div className='text-center'>Loading...</div>;
+  }
 
   return (
     <div className='hero min-h-screen bg-base-200'>

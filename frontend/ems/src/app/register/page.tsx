@@ -2,14 +2,17 @@
 import { RegisterUserDto } from '@/dto/register-user.dto';
 import { AuthService } from '@/services/auth-service';
 import { FileValidatorService } from '@/services/file-validator-service';
+import { getProfile } from '@/utils/getProfile';
 import { classValidatorResolver } from '@hookform/resolvers/class-validator';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ChangeEvent, useState } from 'react';
+import { ChangeEvent, useEffect, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 
 function Register() {
+  const [isLoading, setIsLoading] = useState(true);
+
   const [photoFile, setPhotoFile] = useState<File>();
   const [photoUrl, setPhotoUrl] = useState('');
   const [photoErrMsg, setPhotoErrMsg] = useState('');
@@ -17,6 +20,16 @@ function Register() {
   const [errMsg, setErrMsg] = useState('');
 
   const router = useRouter();
+
+  useEffect(() => {
+    getProfile().then((user) => {
+      if (user) {
+        router.replace('/');
+      } else {
+        setIsLoading(false);
+      }
+    });
+  }, [router]);
 
   const resolver = classValidatorResolver(RegisterUserDto);
 
@@ -52,6 +65,8 @@ function Register() {
       setPhotoFile(file);
       setPhotoUrl(url);
     } catch (err: any) {
+      setPhotoFile(undefined);
+      setPhotoUrl('');
       setPhotoErrMsg(err.message);
       e.target.files = null;
     }
@@ -68,6 +83,10 @@ function Register() {
       setErrMsg(err.message);
     }
   };
+
+  if (isLoading) {
+    return <div className='text-center'>Loading...</div>;
+  }
 
   return (
     <div className='hero min-h-screen bg-base-200'>

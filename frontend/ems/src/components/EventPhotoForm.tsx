@@ -2,12 +2,41 @@
 
 import { FileValidatorService } from '@/services/file-validator-service';
 import Image from 'next/image';
-import { ChangeEvent, useState } from 'react';
+import { ChangeEvent, useEffect, useState } from 'react';
 
-function EventPhotoForm() {
-  const [photoFile, setPhotoFile] = useState<File>();
+type TEventPhotoFormProps = {
+  index: number;
+  setPhotoFile: (file: File | undefined) => void;
+  remove: () => void;
+  errorMsg?: string;
+  photoUrl?: string;
+  isEditForm: boolean;
+  isFieldDisabled: boolean;
+};
+
+function EventPhotoForm({
+  index,
+  setPhotoFile,
+  remove,
+  errorMsg,
+  photoUrl: imgUrl,
+  isEditForm,
+  isFieldDisabled
+}: TEventPhotoFormProps) {
   const [photoUrl, setPhotoUrl] = useState('');
   const [photoErrMsg, setPhotoErrMsg] = useState('');
+
+  useEffect(() => {
+    if (errorMsg && !photoUrl && !imgUrl) {
+      setPhotoErrMsg(errorMsg);
+    }
+  }, [errorMsg, photoUrl, imgUrl]);
+
+  useEffect(() => {
+    if (isEditForm && imgUrl) {
+      setPhotoUrl(imgUrl);
+    }
+  }, [isEditForm, imgUrl]);
 
   const handleUserPhoto = async (e: ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
@@ -32,15 +61,11 @@ function EventPhotoForm() {
       setPhotoFile(file);
       setPhotoUrl(url);
     } catch (err: any) {
+      setPhotoFile(undefined);
+      setPhotoUrl('');
       setPhotoErrMsg(err.message);
       e.target.files = null;
     }
-  };
-
-  const handleDelete = () => {
-    setPhotoFile(undefined);
-    setPhotoUrl('');
-    setPhotoErrMsg('');
   };
 
   return (
@@ -63,14 +88,18 @@ function EventPhotoForm() {
           type='file'
           className='file-input file-input-bordered file-input-sm w-full max-w-xs'
           onChange={handleUserPhoto}
+          disabled={isFieldDisabled}
         />
-        <button
-          type='button'
-          className='btn btn-sm btn-outline btn-error'
-          onClick={handleDelete}
-        >
-          Delete
-        </button>
+        {index > 0 ? (
+          <button
+            type='button'
+            className='btn btn-sm btn-outline btn-error'
+            onClick={() => remove()}
+            disabled={isFieldDisabled}
+          >
+            Delete
+          </button>
+        ) : null}
       </div>
       {photoErrMsg ? (
         <label className='label'>

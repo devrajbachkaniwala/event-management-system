@@ -29,14 +29,15 @@ export default async function Home() {
       <div className='flex mx-6 my-8 gap-6'>
         {events ? (
           events.map((event) => (
-            <Card
-              id={event.id}
-              title={event.name}
-              description={event.description}
-              photoUrl={event.photos[0]?.photoUrl}
-              tags={event.category}
-              key={event.id}
-            />
+            <Link key={event.id} href={`/events/${event.id}`}>
+              <Card
+                id={event.id}
+                title={event.name}
+                description={event.description}
+                photoUrl={event.photos[0]?.photoUrl}
+                tags={event.category}
+              />
+            </Link>
           ))
         ) : (
           <div>No events</div>

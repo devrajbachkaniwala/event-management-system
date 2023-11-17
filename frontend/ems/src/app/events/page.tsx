@@ -3,6 +3,7 @@
 import { Card } from '@/components/Card';
 import { EventDto } from '@/dto/event.dto';
 import { getAllEvents } from '@/utils/getAllEvents';
+import Link from 'next/link';
 import { ChangeEvent, useEffect, useState } from 'react';
 
 function Event() {
@@ -66,15 +67,16 @@ function Event() {
       <div className='my-8 gap-6 w-full'>
         {filteredEvents && filteredEvents.length ? (
           filteredEvents.map((event) => (
-            <Card
-              id={event.id}
-              title={event.name}
-              description={event.description}
-              photoUrl={event.photos[0]?.photoUrl}
-              tags={event.category}
-              key={event.id}
-              className='card-side w-full mt-6'
-            />
+            <Link key={event.id} href={`/events/${event.id}`}>
+              <Card
+                id={event.id}
+                title={event.name}
+                description={event.description}
+                photoUrl={event.photos[0]?.photoUrl}
+                tags={event.category}
+                className='card-side w-full mt-6'
+              />
+            </Link>
           ))
         ) : (
           <div className='text-center'>No events</div>

@@ -1,30 +1,48 @@
-type THeader = {
-  headers?: Record<string, string>;
+import { refetchAccessToken } from '@/utils/refetchAccessToken';
+import { LocalStorageService } from './local-storage-service';
+import { TokenService } from './token-service';
+
+type TOpt = {
+  headers?: Record<string, string> & {
+    authorization?: string;
+    'Content-Type'?: string;
+  };
+  authTokenType?: 'accessToken' | 'refreshToken';
 };
 
-type TGetOpt = THeader;
+type TGetOpt = TOpt;
 
 type TBody = {
-  body: any;
+  body?: any;
   contentType?: string;
 };
 
-type TPostOpt = THeader & TBody;
+type TPostOpt = TOpt & TBody;
 
-type TPatchOpt = THeader & TBody;
+type TPatchOpt = TOpt & TBody;
 
-type TDeleteOpt = THeader & TBody;
+type TDeleteOpt = TOpt & TBody;
 
 export class FetchService {
   static getWithForceCache(url: string, options?: TGetOpt) {
+    const auth = FetchService.addAuthHeader(options?.authTokenType);
+
     return fetch(url, {
-      headers: options?.headers
+      headers: {
+        ...options?.headers,
+        ...auth
+      }
     });
   }
 
   static getWithNoStore(url: string, options?: TGetOpt) {
+    const auth = FetchService.addAuthHeader(options?.authTokenType);
+
     return fetch(url, {
-      headers: options?.headers,
+      headers: {
+        ...options?.headers,
+        ...auth
+      },
       cache: 'no-store'
     });
   }
@@ -33,8 +51,13 @@ export class FetchService {
     url: string,
     options?: TGetOpt & { revalidate: number }
   ) {
+    const auth = FetchService.addAuthHeader(options?.authTokenType);
+
     return fetch(url, {
-      headers: options?.headers,
+      headers: {
+        ...options?.headers,
+        ...auth
+      },
       next: {
         revalidate: options?.revalidate
       }
@@ -42,8 +65,11 @@ export class FetchService {
   }
 
   static post(url: string, options: TPostOpt) {
+    const auth = FetchService.addAuthHeader(options?.authTokenType);
+
     const headerOpt = {
-      ...options.headers
+      ...options.headers,
+      ...auth
     };
 
     if (options.contentType) {
@@ -60,8 +86,11 @@ export class FetchService {
   }
 
   static patch(url: string, options: TPatchOpt) {
+    const auth = FetchService.addAuthHeader(options?.authTokenType);
+
     const headerOpt = {
-      ...options.headers
+      ...options.headers,
+      ...auth
     };
 
     if (options.contentType) {
@@ -78,8 +107,11 @@ export class FetchService {
   }
 
   static delete(url: string, options: TDeleteOpt) {
+    const auth = FetchService.addAuthHeader(options?.authTokenType);
+
     const headerOpt = {
-      ...options.headers
+      ...options.headers,
+      ...auth
     };
 
     if (options.contentType) {
@@ -93,5 +125,20 @@ export class FetchService {
         ? JSON.stringify(options.body)
         : options.body
     });
+  }
+
+  static addAuthHeader(tokenType: 'accessToken' | 'refreshToken' | undefined) {
+    const header = {
+      authorization: 'Bearer '
+    };
+
+    if (tokenType === 'accessToken') {
+      header.authorization += TokenService.getAccessToken();
+    } else if (tokenType === 'refreshToken') {
+      header.authorization += TokenService.getRefreshToken();
+    } else {
+      return {};
+    }
+    return header;
   }
 }

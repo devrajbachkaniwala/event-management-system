@@ -8,7 +8,17 @@ type TTokens = {
   refreshToken: string;
 };
 
+type TToken = {
+  accessToken: string;
+};
+
 type TToast = {
   success: boolean;
   message: string;
+};
+
+type TCreateEventPhoto = {
+  id: string;
+  file?: File | undefined;
+  photoUrl?: string;
 };

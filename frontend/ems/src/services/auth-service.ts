@@ -50,6 +50,21 @@ export class AuthService {
   }
 
   // static validateAccessToken(accessToken: string) {}
+
+  static async getAccessToken() {
+    const url = `${EnvService.getServerUrl()}/v1/auth/token`;
+    const res = await FetchService.post(url, {
+      authTokenType: 'refreshToken'
+    });
+
+    const resData = await res.json();
+
+    if (!res.ok) {
+      throw new AuthServiceError(resData.message);
+    }
+
+    return resData.data as TToken;
+  }
 }
 
 export class AuthServiceError extends Error {

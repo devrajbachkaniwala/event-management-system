@@ -1,11 +1,11 @@
 'use client';
 
-import { EventForm } from '@/components/EventForm';
+import { OrgForm } from '@/components/OrgForm';
 import { getProfile } from '@/utils/getProfile';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-function EventCreate() {
+function OrganizationEdit() {
   const [isLoading, setIsLoading] = useState(true);
 
   const router = useRouter();
@@ -16,7 +16,7 @@ function EventCreate() {
         router.replace('/login');
       } else if (!u?.orgId) {
         router.replace('/organization/create');
-      } else if (u?.orgId) {
+      } else {
         setIsLoading(false);
       }
     });
@@ -28,12 +28,9 @@ function EventCreate() {
 
   return (
     <div className='mx-6'>
-      <h2 className='font-bold text-2xl text-center my-6'>Create an event</h2>
-      <div className=''>
-        <EventForm isEditForm={false} />
-      </div>
+      <OrgForm isEditForm={true} />
     </div>
   );
 }
 
-export default EventCreate;
+export default OrganizationEdit;
