@@ -5,15 +5,15 @@ import {
   IsOptional,
   IsString,
   MaxLength,
+  Min,
   MinLength
 } from 'class-validator';
-import { IsNumberGteZero } from '../decorators';
 import { Type } from 'class-transformer';
 
 export class CreateEventPriceDto {
   @IsNotEmpty()
   @IsNumber()
-  @IsNumberGteZero()
+  @Min(0)
   @Type(() => Number)
   price: number;
 
@@ -26,6 +26,7 @@ export class CreateEventPriceDto {
   @IsOptional()
   @IsNumber()
   @IsInt()
-  @IsNumberGteZero()
+  @Min(0)
+  @Type(() => Number)
   maxLimit?: number;
 }

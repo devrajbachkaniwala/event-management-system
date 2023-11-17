@@ -28,11 +28,11 @@ export class JwtAccessStrategy extends PassportStrategy(
     exp: number;
   }) {
     try {
-      const userDto = await this.authService.validateUserAccessJti(
-        payload.user.id,
-        payload.jti
-      );
-      payload.user = userDto;
+      // const userDto = await this.authService.validateUserAccessJti(
+      //   payload.user.id,
+      //   payload.jti
+      // );
+      // payload.user = userDto;
     } catch (err: any) {
       console.log(err);
       throw err;

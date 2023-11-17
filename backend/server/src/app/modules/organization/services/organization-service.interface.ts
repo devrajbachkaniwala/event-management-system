@@ -1,3 +1,4 @@
+import { EventDto } from '../../events';
 import {
   CreateOrganizationDto,
   OrganizationDto,
@@ -13,6 +14,8 @@ export interface IOrganizationService {
   ): Promise<OrganizationDto>;
 
   findOne(userId: string): Promise<OrganizationDto>;
+
+  getOrgEvents(orgId: string): Promise<EventDto[]>;
 
   update(
     userId: string,

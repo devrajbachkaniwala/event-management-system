@@ -13,6 +13,7 @@ import {
 } from '../../prisma/services';
 import { IOrganizationService } from './organization-service.interface';
 import { ConfigService } from '@nestjs/config';
+import { EventDto, EventDtoFactory } from '../../events';
 
 @Injectable()
 export class OrganizationService implements IOrganizationService {
@@ -83,6 +84,25 @@ export class OrganizationService implements IOrganizationService {
       throw OrganizationErrorFactory.create(
         err,
         'Failed to get an organization'
+      );
+    }
+  }
+
+  async getOrgEvents(orgId: string): Promise<EventDto[]> {
+    try {
+      const events = await this.prisma.event.findMany({
+        where: {
+          organization: {
+            id: orgId
+          }
+        }
+      });
+
+      return events.map(EventDtoFactory.create);
+    } catch (err: any) {
+      throw OrganizationErrorFactory.create(
+        err,
+        'Failed to get an organization events'
       );
     }
   }

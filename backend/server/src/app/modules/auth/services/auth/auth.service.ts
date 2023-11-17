@@ -266,7 +266,7 @@ export class AuthService implements IAuthService {
         throw new DisabledUserAccount();
       }
 
-      if (user.tokens.at(0).accessTokenExpiredAt.getTime() <= Date.now()) {
+      if (user.tokens.at(0)?.accessTokenExpiredAt.getTime() <= Date.now()) {
         throw new TokenExpired();
       }
 
@@ -300,7 +300,7 @@ export class AuthService implements IAuthService {
         throw new DisabledUserAccount();
       }
 
-      if (user.tokens.at(0).refreshTokenExpiredAt.getTime() <= Date.now()) {
+      if (user.tokens.at(0)?.refreshTokenExpiredAt.getTime() <= Date.now()) {
         throw new TokenExpired();
       }
 

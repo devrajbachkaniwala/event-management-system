@@ -21,7 +21,7 @@ import {
   UpdateOrganizationDto
 } from '../dto';
 import { ResErrorDtoFactory, ResSuccessDtoFactory, UserDto } from 'src/app/dto';
-import { GetReqUser, Public, Roles } from 'src/app/decorators';
+import { GetOrgId, GetReqUser, Public, Roles } from 'src/app/decorators';
 import { IOrganizationService, organizationServiceToken } from '../services';
 import { Role } from '@prisma/client';
 import { RoleGuard } from 'src/app/guards';
@@ -30,6 +30,7 @@ import { diskStorage } from 'multer';
 import { v4 } from 'uuid';
 import { extname } from 'path';
 import { Response } from 'express';
+import { EventDto } from '../../events';
 
 @Controller({ path: 'organization', version: '1' })
 export class OrganizationController {
@@ -89,6 +90,8 @@ export class OrganizationController {
   }
 
   @Get()
+  @Roles([Role.TEAM_MEMBER])
+  @UseGuards(RoleGuard)
   async findOne(@GetReqUser() reqUser: { user: UserDto; jti: string }) {
     let organizationDto: OrganizationDto = null;
     try {
@@ -100,6 +103,23 @@ export class OrganizationController {
     }
 
     return ResSuccessDtoFactory.create(organizationDto);
+  }
+
+  @Get('/events')
+  @Roles([Role.TEAM_MEMBER])
+  @UseGuards(RoleGuard)
+  async getOrgEvents(@GetOrgId() orgId: string) {
+    let events: EventDto[] = null;
+    try {
+      events = await this.organizationsService.getOrgEvents(orgId);
+    } catch (err: any) {
+      throw ResErrorDtoFactory.create(
+        err,
+        'Failed to get an organization events'
+      );
+    }
+
+    return ResSuccessDtoFactory.create(events);
   }
 
   @UseInterceptors(
