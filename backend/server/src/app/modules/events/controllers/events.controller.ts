@@ -106,14 +106,48 @@ export class EventsController {
   @Patch(':event_id')
   @Roles([Role.TEAM_MEMBER])
   @UseGuards(RoleGuard)
+  @UseInterceptors(
+    FilesInterceptor('photos', 5, {
+      storage: diskStorage({
+        destination: './uploads/event-photos',
+        filename: (req, file, callback) => {
+          const name = v4();
+          const ext = extname(file.originalname);
+          const filename = name + ext;
+
+          callback(null, filename);
+        }
+      })
+    })
+  )
   async update(
     @GetOrgId() orgId: string,
     @Param('event_id') eventId: string,
-    @Body() updateEventDto: UpdateEventDto
+    @Body() updateEventDto: UpdateEventDto,
+    @UploadedFiles(
+      new ParseFilePipe({
+        fileIsRequired: false,
+        validators: [
+          new MaxFileSizeValidator({
+            maxSize: 80000,
+            message: 'Photo cannot exceed 80kb'
+          }),
+          new FileTypeValidator({
+            fileType: /.(jpg|jpeg|png)$/
+          })
+        ]
+      })
+    )
+    files: Array<Express.Multer.File>
   ) {
     let event: EventDto = null;
     try {
-      event = await this.eventsService.update(orgId, eventId, updateEventDto);
+      event = await this.eventsService.update(
+        orgId,
+        eventId,
+        updateEventDto,
+        files
+      );
     } catch (err: any) {
       throw ResErrorDtoFactory.create(err, 'Failed to update an event');
     }

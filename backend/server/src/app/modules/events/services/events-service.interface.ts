@@ -15,7 +15,8 @@ export interface IEventsService {
   update(
     orgId: string,
     eventId: string,
-    updateEventDto: UpdateEventDto
+    updateEventDto: UpdateEventDto,
+    eventPhotoFiles: Array<Express.Multer.File>
   ): Promise<EventDto>;
 
   remove(orgId: string, eventId: string): Promise<true>;

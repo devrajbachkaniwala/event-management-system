@@ -121,7 +121,12 @@ export class EventsService implements IEventsService {
     }
   }
 
-  async update(orgId: string, eventId: string, updateEventDto: UpdateEventDto) {
+  async update(
+    orgId: string,
+    eventId: string,
+    updateEventDto: UpdateEventDto,
+    eventPhotoFiles: Array<Express.Multer.File>
+  ) {
     try {
       const event = await this.prisma.event.update({
         where: {
@@ -137,11 +142,47 @@ export class EventsService implements IEventsService {
           state: updateEventDto.state,
           country: updateEventDto.country,
           venue: updateEventDto.venue,
-          category: updateEventDto.category
+          category: updateEventDto.category,
+
+          timings: updateEventDto.timings.map((t) => ({
+            date: t.date,
+            startTime: t.startTime,
+            endTime: t.endTime
+          })),
+
+          prices: updateEventDto.prices.map((p) => ({
+            price: p.price,
+            currency: p.currency,
+            maxLimit: p.maxLimit
+          }))
         }
       });
 
-      return EventDtoFactory.create(event);
+      const photoUrls = eventPhotoFiles.map((p) => ({
+        photoUrl: this.generatePhotoUrl(event.id, p.filename)
+      }));
+
+      const updateEvent = await this.prisma.event.update({
+        where: {
+          id: event.id,
+          organization: {
+            id: orgId
+          }
+        },
+        data: {
+          photos: {
+            push: photoUrls
+          }
+        }
+      });
+
+      const data: Event = { ...updateEvent };
+
+      data.timings = data.timings.map(EventTimingDtoFactory.create);
+      data.prices = data.prices.map(EventPriceDtoFactory.create);
+      data.photos = data.photos.map(EventPhotoDtoFactory.create);
+
+      return EventDtoFactory.create(data);
     } catch (err: any) {
       throw EventErrorFactory.create(err, 'Failed to update an event');
     }
