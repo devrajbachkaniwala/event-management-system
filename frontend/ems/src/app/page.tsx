@@ -1,9 +1,24 @@
+'use client';
+
 import { Card } from '@/components/Card';
+import { EventDto } from '@/dto/event.dto';
 import { getAllEvents } from '@/utils/getAllEvents';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
-export default async function Home() {
-  const events = await getAllEvents();
+export default function Home() {
+  const [isLoading, setIsLoading] = useState(true);
+  const [events, setEvents] = useState<EventDto[]>();
+
+  useEffect(() => {
+    getAllEvents()
+      .then((events) => setEvents(events))
+      .finally(() => setIsLoading(false));
+  }, []);
+
+  if (isLoading) {
+    return <div className='text-center'>Loading...</div>;
+  }
 
   return (
     <main className='h-3/4'>
@@ -26,7 +41,7 @@ export default async function Home() {
           </div>
         </div>
       </div>
-      <div className='flex mx-6 my-8 gap-6'>
+      <div className='flex flex-wrap mx-6 my-8 gap-6'>
         {events ? (
           events.map((event) => (
             <Link key={event.id} href={`/events/${event.id}`}>

@@ -1,11 +1,14 @@
 import { refetchAccessToken } from '@/utils/refetchAccessToken';
 import { LocalStorageService } from './local-storage-service';
 import { TokenService } from './token-service';
+import { enhancedRevalidateFetch } from '@/utils/enhancedRevalidateFetch';
+
+type TContentType = 'application/json' | 'form-data';
 
 type TOpt = {
   headers?: Record<string, string> & {
     authorization?: string;
-    'Content-Type'?: string;
+    'Content-Type'?: TContentType;
   };
   authTokenType?: 'accessToken' | 'refreshToken';
 };
@@ -14,7 +17,7 @@ type TGetOpt = TOpt;
 
 type TBody = {
   body?: any;
-  contentType?: string;
+  contentType?: TContentType;
 };
 
 type TPostOpt = TOpt & TBody;
@@ -27,24 +30,39 @@ export class FetchService {
   static getWithForceCache(url: string, options?: TGetOpt) {
     const auth = FetchService.addAuthHeader(options?.authTokenType);
 
-    return fetch(url, {
+    return enhancedRevalidateFetch(url, {
       headers: {
         ...options?.headers,
         ...auth
       }
     });
+
+    // return fetch(url, {
+    //   headers: {
+    //     ...options?.headers,
+    //     ...auth
+    //   }
+    // });
   }
 
   static getWithNoStore(url: string, options?: TGetOpt) {
     const auth = FetchService.addAuthHeader(options?.authTokenType);
 
-    return fetch(url, {
+    return enhancedRevalidateFetch(url, {
       headers: {
         ...options?.headers,
         ...auth
       },
       cache: 'no-store'
     });
+
+    // return fetch(url, {
+    //   headers: {
+    //     ...options?.headers,
+    //     ...auth
+    //   },
+    //   cache: 'no-store'
+    // });
   }
 
   static getWithRevalidate(
@@ -53,7 +71,7 @@ export class FetchService {
   ) {
     const auth = FetchService.addAuthHeader(options?.authTokenType);
 
-    return fetch(url, {
+    return enhancedRevalidateFetch(url, {
       headers: {
         ...options?.headers,
         ...auth
@@ -62,6 +80,16 @@ export class FetchService {
         revalidate: options?.revalidate
       }
     });
+
+    // return fetch(url, {
+    //   headers: {
+    //     ...options?.headers,
+    //     ...auth
+    //   },
+    //   next: {
+    //     revalidate: options?.revalidate
+    //   }
+    // });
   }
 
   static post(url: string, options: TPostOpt) {
@@ -72,17 +100,27 @@ export class FetchService {
       ...auth
     };
 
-    if (options.contentType) {
+    if (options.contentType === 'application/json') {
       headerOpt['Content-Type'] = options.contentType;
     }
 
-    return fetch(url, {
+    let bodyData = options.body;
+
+    if (options.contentType === 'application/json') {
+      bodyData = JSON.stringify(bodyData);
+    }
+
+    return enhancedRevalidateFetch(url, {
       method: 'POST',
       headers: headerOpt,
-      body: options.contentType?.includes('json')
-        ? JSON.stringify(options.body)
-        : options.body
+      body: bodyData
     });
+
+    // return fetch(url, {
+    //   method: 'POST',
+    //   headers: headerOpt,
+    //   body: bodyData
+    // });
   }
 
   static patch(url: string, options: TPatchOpt) {
@@ -93,17 +131,27 @@ export class FetchService {
       ...auth
     };
 
-    if (options.contentType) {
+    if (options.contentType === 'application/json') {
       headerOpt['Content-Type'] = options.contentType;
     }
 
-    return fetch(url, {
+    let bodyData = options.body;
+
+    if (options.contentType === 'application/json') {
+      bodyData = JSON.stringify(bodyData);
+    }
+
+    return enhancedRevalidateFetch(url, {
       method: 'PATCH',
       headers: headerOpt,
-      body: options.contentType?.includes('json')
-        ? JSON.stringify(options.body)
-        : options.body
+      body: bodyData
     });
+
+    // return fetch(url, {
+    //   method: 'PATCH',
+    //   headers: headerOpt,
+    //   body: bodyData
+    // });
   }
 
   static delete(url: string, options: TDeleteOpt) {
@@ -114,17 +162,27 @@ export class FetchService {
       ...auth
     };
 
-    if (options.contentType) {
+    if (options.contentType === 'application/json') {
       headerOpt['Content-Type'] = options.contentType;
     }
 
-    return fetch(url, {
+    let bodyData = options.body;
+
+    if (options.contentType === 'application/json') {
+      bodyData = JSON.stringify(bodyData);
+    }
+
+    return enhancedRevalidateFetch(url, {
       method: 'DELETE',
       headers: headerOpt,
-      body: options.contentType?.includes('json')
-        ? JSON.stringify(options.body)
-        : options.body
+      body: bodyData
     });
+
+    // return fetch(url, {
+    //   method: 'DELETE',
+    //   headers: headerOpt,
+    //   body: bodyData
+    // });
   }
 
   static addAuthHeader(tokenType: 'accessToken' | 'refreshToken' | undefined) {

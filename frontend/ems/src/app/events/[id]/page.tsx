@@ -1,10 +1,14 @@
 'use client';
 
 import { Toast } from '@/components/Toast';
+import { CreateBookingDto } from '@/dto/create-booking.dto';
 import { EventDto } from '@/dto/event.dto';
 import { DateService } from '@/services/date-service';
+import { bookEvent } from '@/utils/bookEvent';
 import { getAllEvents } from '@/utils/getAllEvents';
 import { getEvent } from '@/utils/getEvent';
+import { getProfile } from '@/utils/getProfile';
+import { wait } from '@/utils/wait';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -67,22 +71,44 @@ function Event({ params }: TEventProps) {
       if (modal) {
         modal.open = false;
       }
+      const user = await getProfile();
 
-      setToastData({
-        success: true,
-        message: 'Registered successfully'
-      });
+      if (!user) {
+        router.replace('/login');
+        return;
+      }
 
-      const timerId: NodeJS.Timeout = await new Promise((resolve, reject) => {
-        const timeoutId = setTimeout(() => {
-          setToastData(undefined);
-          resolve(timeoutId);
-        }, 500);
-      });
-      clearTimeout(timerId);
+      if (event && selectedPriceId && selectedTimingId) {
+        const createBooking: CreateBookingDto = {
+          eventId: event.id,
+          orgId: event.orgId,
+          priceId: selectedPriceId,
+          timingId: selectedTimingId,
+          qty: selectedQty
+        };
 
-      router.push('/');
-    } catch (err: any) {}
+        console.log(createBooking);
+
+        const booking = await bookEvent(createBooking);
+
+        if (booking) {
+          setToastData({
+            success: true,
+            message: 'Successfully booked the event'
+          });
+        } else {
+          setToastData({
+            success: false,
+            message: 'Failed to book an event'
+          });
+        }
+      }
+      await wait(1.5);
+      setToastData(undefined);
+      router.push('/my-bookings');
+    } catch (err: any) {
+      console.log(err);
+    }
   };
 
   if (isLoading) {

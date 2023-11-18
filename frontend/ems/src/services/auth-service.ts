@@ -2,6 +2,7 @@ import { RegisterUserDto } from '@/dto/register-user.dto';
 import { EnvService } from './env-service';
 import { FetchService } from './fetch-service';
 import { UserDto } from '@/dto/user.dto';
+import { TokenService } from './token-service';
 
 export class AuthService {
   static async login(userCredentials: TLoginCredentials): Promise<TTokens> {

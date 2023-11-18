@@ -21,4 +21,5 @@ type TCreateEventPhoto = {
   id: string;
   file?: File | undefined;
   photoUrl?: string;
+  touched: boolean;
 };

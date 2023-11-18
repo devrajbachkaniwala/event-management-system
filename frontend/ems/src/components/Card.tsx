@@ -20,13 +20,13 @@ function Card({
 }: TCardProps) {
   return (
     <div className={`card w-96 bg-base-100 shadow-xl ${className}`}>
-      <figure className='object-cover max-w-full h-56'>
+      <figure className='object-cover max-w-sm h-56'>
         <Image
           src={photoUrl}
           alt={title}
           width={200}
           height={200}
-          className='w-full'
+          className='w-full max-w-sm'
         />
       </figure>
       <div className='card-body'>

@@ -15,6 +15,12 @@ import { useState } from 'react';
 import { v4 } from 'uuid';
 import { getEvent } from '@/utils/getEvent';
 import { useRouter } from 'next/navigation';
+import { createEvent } from '@/utils/createEvent';
+import { Toast } from './Toast';
+import { wait } from '@/utils/wait';
+import { UpdateEventDto } from '@/dto/update-event.dto';
+import { updateEvent } from '@/utils/updateEvent';
+import { deleteEventPhoto } from '@/utils/deleteEventPhoto';
 
 const priceDefaultValue: CreateEventPriceDto = {
   price: 0,
@@ -45,7 +51,8 @@ const eventDefaultValue: CreateEventDto = {
 
 const eventPhotoDefaultValue: TCreateEventPhoto = {
   id: v4(),
-  file: undefined
+  file: undefined,
+  touched: true
 };
 
 type TEventFormProps = {
@@ -61,12 +68,13 @@ function EventForm({ eventId, isEditForm }: TEventFormProps) {
     eventPhotoDefaultValue
   ]);
   const [photoErrorMsg, setPhotoErrMsg] = useState('');
+  const [toastData, setToastData] = useState<TToast>();
 
   const router = useRouter();
 
   const handleAppendPhoto = () => {
     setPhotoFiles((prev) => {
-      return [...prev, { id: v4(), file: undefined }];
+      return [...prev, { id: v4(), file: undefined, touched: true }];
     });
   };
 
@@ -83,7 +91,12 @@ function EventForm({ eventId, isEditForm }: TEventFormProps) {
         const event = await getEvent(eventId);
         setIsLoading(false);
         if (event) {
-          setPhotoFiles(event.photos);
+          setPhotoFiles(
+            event.photos.map((p) => ({
+              ...p,
+              touched: false
+            }))
+          );
           return event;
         }
       }
@@ -110,7 +123,65 @@ function EventForm({ eventId, isEditForm }: TEventFormProps) {
     control
   });
 
-  const onSubmit: SubmitHandler<CreateEventDto> = (data) => {
+  const handleCreate = async (
+    data: CreateEventDto,
+    photoFiles: (File | undefined)[]
+  ) => {
+    const event = await createEvent(data, photoFiles);
+
+    if (event) {
+      setToastData({
+        success: true,
+        message: 'Successfully created an event'
+      });
+    } else {
+      setToastData({
+        success: false,
+        message: 'Failed to create an event'
+      });
+    }
+
+    await wait(1);
+    setToastData(undefined);
+
+    if (!isEditForm && event) {
+      router.push(`/events/${event?.id}`);
+    }
+  };
+
+  const handleEdit = async (
+    data: UpdateEventDto,
+    photoFiles: (File | undefined)[]
+  ) => {
+    if (!eventId) {
+      return;
+    }
+
+    const event = await updateEvent(eventId, data, photoFiles);
+
+    setPhotoFiles((file) => file.map((f) => ({ ...f, touched: false })));
+
+    if (event) {
+      setToastData({
+        success: true,
+        message: 'Successfully updated an event'
+      });
+    } else {
+      setToastData({
+        success: false,
+        message: 'Failed to update an event'
+      });
+    }
+
+    if (isEditForm) {
+      setIsFieldDisabled(true);
+    }
+
+    await wait(1);
+    setToastData(undefined);
+  };
+
+  const onSubmit: SubmitHandler<CreateEventDto> = async (data) => {
     if (!photoFiles.every((f) => !!f.file || !!f.photoUrl)) {
       setPhotoErrMsg((prev) => 'Photo file is required');
       return;
@@ -119,7 +190,17 @@ function EventForm({ eventId, isEditForm }: TEventFormProps) {
     console.log(data);
     console.log(photoFiles);
 
-    setIsFieldDisabled(true);
+    if (isEditForm) {
+      const f = photoFiles.map((p) => {
+        if (p.touched) {
+          return p.file;
+        }
+      });
+      await handleEdit(data, f);
+    } else {
+      const files = photoFiles.map((p) => p.file);
+      await handleCreate(data, files);
+    }
   };
 
   if (isLoading) {
@@ -127,308 +208,312 @@ function EventForm({ eventId, isEditForm }: TEventFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
-      <div className='form-control w-full max-w-lg'>
-        <div className='flex justify-between'>
-          <label htmlFor='name' className='label'>
-            <span className='label-text'>Event name</span>
+    <>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <div className='form-control w-full max-w-lg'>
+          <div className='flex justify-between'>
+            <label htmlFor='name' className='label'>
+              <span className='label-text'>Event name</span>
+            </label>
+            <input
+              id='name'
+              type='text'
+              placeholder='Event name'
+              className='input input-bordered input-md w-full max-w-xs flex-grow'
+              {...register('name')}
+              disabled={isFieldDisabled}
+            />
+          </div>
+          <label className='label'>
+            {errors.name ? (
+              <>
+                <span className='label-text-alt error-msg'></span>
+                <span className='label-text-alt error-msg'>
+                  {errors.name.message}
+                </span>
+              </>
+            ) : null}
           </label>
-          <input
-            id='name'
-            type='text'
-            placeholder='Event name'
-            className='input input-bordered input-md w-full max-w-xs flex-grow'
-            {...register('name')}
-            disabled={isFieldDisabled}
-          />
         </div>
-        <label className='label'>
-          {errors.name ? (
-            <>
-              <span className='label-text-alt error-msg'></span>
-              <span className='label-text-alt error-msg'>
-                {errors.name.message}
-              </span>
-            </>
-          ) : null}
-        </label>
-      </div>
 
-      <div className='form-control w-full max-w-lg'>
-        <div className='flex justify-between'>
-          <label htmlFor='description' className='label'>
-            <span className='label-text'>Event description</span>
+        <div className='form-control w-full max-w-lg'>
+          <div className='flex justify-between'>
+            <label htmlFor='description' className='label'>
+              <span className='label-text'>Event description</span>
+            </label>
+            <textarea
+              id='description'
+              className='textarea textarea-bordered textarea-md h-24 max-w-xs flex-grow'
+              placeholder='Event description'
+              {...register('description')}
+              disabled={isFieldDisabled}
+            ></textarea>
+          </div>
+          <label className='label'>
+            {errors.description ? (
+              <>
+                <span className='label-text-alt error-msg'></span>
+                <span className='label-text-alt error-msg'>
+                  {errors.description.message}
+                </span>
+              </>
+            ) : null}
           </label>
-          <textarea
-            id='description'
-            className='textarea textarea-bordered textarea-md h-24 max-w-xs flex-grow'
-            placeholder='Event description'
-            {...register('description')}
-            disabled={isFieldDisabled}
-          ></textarea>
         </div>
-        <label className='label'>
-          {errors.description ? (
-            <>
-              <span className='label-text-alt error-msg'></span>
-              <span className='label-text-alt error-msg'>
-                {errors.description.message}
-              </span>
-            </>
-          ) : null}
-        </label>
-      </div>
 
-      <div className='form-control w-full max-w-lg'>
-        <div className='flex justify-between'>
-          <label htmlFor='city' className='label'>
-            <span className='label-text'>City</span>
+        <div className='form-control w-full max-w-lg'>
+          <div className='flex justify-between'>
+            <label htmlFor='city' className='label'>
+              <span className='label-text'>City</span>
+            </label>
+            <input
+              id='city'
+              type='text'
+              placeholder='City'
+              className='input input-bordered input-md w-full max-w-xs flex-grow'
+              {...register('city')}
+              disabled={isFieldDisabled}
+            />
+          </div>
+          <label className='label'>
+            {errors.city ? (
+              <>
+                <span className='label-text-alt error-msg'></span>
+                <span className='label-text-alt error-msg'>
+                  {errors.city.message}
+                </span>
+              </>
+            ) : null}
           </label>
-          <input
-            id='city'
-            type='text'
-            placeholder='City'
-            className='input input-bordered input-md w-full max-w-xs flex-grow'
-            {...register('city')}
-            disabled={isFieldDisabled}
-          />
         </div>
-        <label className='label'>
-          {errors.city ? (
-            <>
-              <span className='label-text-alt error-msg'></span>
-              <span className='label-text-alt error-msg'>
-                {errors.city.message}
-              </span>
-            </>
-          ) : null}
-        </label>
-      </div>
 
-      <div className='form-control w-full max-w-lg'>
-        <div className='flex justify-between'>
-          <label htmlFor='state' className='label'>
-            <span className='label-text'>State</span>
+        <div className='form-control w-full max-w-lg'>
+          <div className='flex justify-between'>
+            <label htmlFor='state' className='label'>
+              <span className='label-text'>State</span>
+            </label>
+            <input
+              id='state'
+              type='text'
+              placeholder='State'
+              className='input input-bordered input-md w-full max-w-xs flex-grow'
+              {...register('state')}
+              disabled={isFieldDisabled}
+            />
+          </div>
+          <label className='label'>
+            {errors.state ? (
+              <>
+                <span className='label-text-alt error-msg'></span>
+                <span className='label-text-alt error-msg'>
+                  {errors.state.message}
+                </span>
+              </>
+            ) : null}
           </label>
-          <input
-            id='state'
-            type='text'
-            placeholder='State'
-            className='input input-bordered input-md w-full max-w-xs flex-grow'
-            {...register('state')}
-            disabled={isFieldDisabled}
-          />
         </div>
-        <label className='label'>
-          {errors.state ? (
-            <>
-              <span className='label-text-alt error-msg'></span>
-              <span className='label-text-alt error-msg'>
-                {errors.state.message}
-              </span>
-            </>
-          ) : null}
-        </label>
-      </div>
 
-      <div className='form-control w-full max-w-lg'>
-        <div className='flex justify-between'>
-          <label htmlFor='country' className='label'>
-            <span className='label-text'>Country</span>
+        <div className='form-control w-full max-w-lg'>
+          <div className='flex justify-between'>
+            <label htmlFor='country' className='label'>
+              <span className='label-text'>Country</span>
+            </label>
+            <input
+              id='country'
+              type='text'
+              placeholder='Country'
+              className='input input-bordered input-md w-full max-w-xs flex-grow'
+              {...register('country')}
+              disabled={isFieldDisabled}
+            />
+          </div>
+          <label className='label'>
+            {errors.country ? (
+              <>
+                <span className='label-text-alt error-msg'></span>
+                <span className='label-text-alt error-msg'>
+                  {errors.country.message}
+                </span>
+              </>
+            ) : null}
           </label>
-          <input
-            id='country'
-            type='text'
-            placeholder='Country'
-            className='input input-bordered input-md w-full max-w-xs flex-grow'
-            {...register('country')}
-            disabled={isFieldDisabled}
-          />
         </div>
-        <label className='label'>
-          {errors.country ? (
-            <>
-              <span className='label-text-alt error-msg'></span>
-              <span className='label-text-alt error-msg'>
-                {errors.country.message}
-              </span>
-            </>
-          ) : null}
-        </label>
-      </div>
 
-      <div className='form-control w-full max-w-lg'>
-        <div className='flex justify-between'>
-          <label htmlFor='venue' className='label'>
-            <span className='label-text'>Venue</span>
+        <div className='form-control w-full max-w-lg'>
+          <div className='flex justify-between'>
+            <label htmlFor='venue' className='label'>
+              <span className='label-text'>Venue</span>
+            </label>
+            <input
+              id='venue'
+              type='text'
+              placeholder='Venue'
+              className='input input-bordered input-md w-full max-w-xs flex-grow'
+              {...register('venue')}
+              disabled={isFieldDisabled}
+            />
+          </div>
+          <label className='label'>
+            {errors.venue ? (
+              <>
+                <span className='label-text-alt error-msg'></span>
+                <span className='label-text-alt error-msg'>
+                  {errors.venue.message}
+                </span>
+              </>
+            ) : null}
           </label>
-          <input
-            id='venue'
-            type='text'
-            placeholder='Venue'
-            className='input input-bordered input-md w-full max-w-xs flex-grow'
-            {...register('venue')}
-            disabled={isFieldDisabled}
-          />
         </div>
-        <label className='label'>
-          {errors.venue ? (
-            <>
-              <span className='label-text-alt error-msg'></span>
-              <span className='label-text-alt error-msg'>
-                {errors.venue.message}
-              </span>
-            </>
-          ) : null}
-        </label>
-      </div>
 
-      <div className='form-control w-full max-w-lg'>
-        <div className='flex justify-between'>
-          <label htmlFor='category' className='label'>
-            <span className='label-text'>Category</span>
+        <div className='form-control w-full max-w-lg'>
+          <div className='flex justify-between'>
+            <label htmlFor='category' className='label'>
+              <span className='label-text'>Category</span>
+            </label>
+            <input
+              id='category'
+              type='text'
+              placeholder='Category'
+              className='input input-bordered input-md w-full max-w-xs flex-grow'
+              {...register('category')}
+              disabled={isFieldDisabled}
+            />
+          </div>
+          <label className='label'>
+            {errors.category ? (
+              <>
+                <span className='label-text-alt error-msg'></span>
+                <span className='label-text-alt error-msg'>
+                  {errors.category.message}
+                </span>
+              </>
+            ) : null}
           </label>
-          <input
-            id='category'
-            type='text'
-            placeholder='Category'
-            className='input input-bordered input-md w-full max-w-xs flex-grow'
-            {...register('category')}
-            disabled={isFieldDisabled}
-          />
         </div>
-        <label className='label'>
-          {errors.category ? (
-            <>
-              <span className='label-text-alt error-msg'></span>
-              <span className='label-text-alt error-msg'>
-                {errors.category.message}
-              </span>
-            </>
-          ) : null}
-        </label>
-      </div>
 
-      {pricesField.map((priceField, idx) => {
-        return (
-          <PriceForm
-            key={priceField.id}
-            index={idx}
-            errors={errors}
-            register={register}
-            remove={removePrice}
-            isEditForm={isEditForm}
-            isFieldDisabled={isFieldDisabled}
-          />
-        );
-      })}
+        {pricesField.map((priceField, idx) => {
+          return (
+            <PriceForm
+              key={priceField.id}
+              index={idx}
+              errors={errors}
+              register={register}
+              remove={removePrice}
+              isEditForm={isEditForm}
+              isFieldDisabled={isFieldDisabled}
+            />
+          );
+        })}
 
-      <div className='max-w-lg flex justify-center'>
-        <button
-          type='button'
-          className='btn btn-sm btn-outline btn-info'
-          onClick={() => appendPrice(priceDefaultValue)}
-          disabled={isFieldDisabled}
-        >
-          Add another price
-        </button>
-      </div>
-
-      {timingsField.map((timingField, idx) => {
-        return (
-          <TimingForm
-            key={timingField.id}
-            index={idx}
-            errors={errors}
-            register={register}
-            remove={removeTiming}
-            isEditForm={isEditForm}
-            isFieldDisabled={isFieldDisabled}
-          />
-        );
-      })}
-
-      <div className='max-w-lg flex justify-center'>
-        <button
-          type='button'
-          className='btn btn-sm btn-outline btn-info'
-          onClick={() => appendTiming(timingDefaultValue)}
-          disabled={isFieldDisabled}
-        >
-          Add another Timing
-        </button>
-      </div>
-
-      {photoFiles.map((photoFile, idx) => (
-        <EventPhotoForm
-          key={photoFile.id}
-          index={idx}
-          setPhotoFile={(file: File | undefined) =>
-            setPhotoFiles((prev) =>
-              prev.map((p) => {
-                if (p.id === photoFile.id) {
-                  return { ...p, file };
-                }
-                return p;
-              })
-            )
-          }
-          remove={() => {
-            setPhotoFiles((prev) => prev.filter((p) => p.id !== photoFile.id));
-          }}
-          errorMsg={photoErrorMsg}
-          photoUrl={photoFile.photoUrl}
-          isEditForm={isEditForm}
-          isFieldDisabled={isFieldDisabled}
-        />
-      ))}
-
-      <div className='max-w-lg flex justify-center'>
-        <button
-          type='button'
-          className='btn btn-sm btn-outline btn-info'
-          onClick={handleAppendPhoto}
-          disabled={isFieldDisabled}
-        >
-          Add another photo
-        </button>
-      </div>
-
-      <div className='max-w-lg my-4'>
-        {isEditForm ? (
+        <div className='max-w-lg flex justify-center'>
           <button
-            type='submit'
-            className={`btn btn-block btn-outline ${
-              isFieldDisabled ? 'btn-info' : 'btn-success'
-            }`}
-            onClick={(e) => {
-              if (isFieldDisabled) {
-                e.preventDefault();
-                setIsFieldDisabled(false);
+            type='button'
+            className='btn btn-sm btn-outline btn-info'
+            onClick={() => appendPrice(priceDefaultValue)}
+            disabled={isFieldDisabled}
+          >
+            Add another price
+          </button>
+        </div>
+
+        {timingsField.map((timingField, idx) => {
+          return (
+            <TimingForm
+              key={timingField.id}
+              index={idx}
+              errors={errors}
+              register={register}
+              remove={removeTiming}
+              isEditForm={isEditForm}
+              isFieldDisabled={isFieldDisabled}
+            />
+          );
+        })}
+
+        <div className='max-w-lg flex justify-center'>
+          <button
+            type='button'
+            className='btn btn-sm btn-outline btn-info'
+            onClick={() => appendTiming(timingDefaultValue)}
+            disabled={isFieldDisabled}
+          >
+            Add another Timing
+          </button>
+        </div>
+
+        {photoFiles.map((photoFile, idx) => (
+          <EventPhotoForm
+            key={photoFile.id}
+            index={idx}
+            setPhotoFile={(file: File | undefined) =>
+              setPhotoFiles((prev) =>
+                prev.map((p) => {
+                  if (p.id === photoFile.id) {
+                    if (eventId) {
+                      deleteEventPhoto(eventId, photoFile.id).then(console.log);
+                    }
+                    return { ...p, file, touched: true };
+                  }
+                  return p;
+                })
+              )
+            }
+            remove={async () => {
+              if (eventId) {
+                const res = await deleteEventPhoto(eventId, photoFile.id);
+                console.log(res);
               }
+              setPhotoFiles((prev) =>
+                prev.filter((p) => p.id !== photoFile.id)
+              );
             }}
-          >
-            {isFieldDisabled ? 'Edit' : 'Save'}
-          </button>
-        ) : (
-          // <button
-          //   type='submit'
-          //   className='btn btn-block btn-outline btn-success'
-          //   onClick={() => setIsFieldDisabled(true)}
-          //   name='save'
-          // >
-          //   Save
-          // </button>
+            errorMsg={photoErrorMsg}
+            photoUrl={photoFile.photoUrl}
+            isEditForm={isEditForm}
+            isFieldDisabled={isFieldDisabled}
+          />
+        ))}
 
+        <div className='max-w-lg flex justify-center'>
           <button
-            type='submit'
-            className='btn btn-block btn-outline btn-success'
+            type='button'
+            className='btn btn-sm btn-outline btn-info'
+            onClick={handleAppendPhoto}
+            disabled={isFieldDisabled}
           >
-            Create
+            Add another photo
           </button>
-        )}
-      </div>
-    </form>
+        </div>
+
+        <div className='max-w-lg my-4'>
+          {isEditForm ? (
+            <button
+              type='submit'
+              className={`btn btn-block btn-outline ${
+                isFieldDisabled ? 'btn-info' : 'btn-success'
+              }`}
+              onClick={(e) => {
+                if (isFieldDisabled) {
+                  e.preventDefault();
+                  setIsFieldDisabled(false);
+                }
+              }}
+            >
+              {isFieldDisabled ? 'Edit' : 'Save'}
+            </button>
+          ) : (
+            <button
+              type='submit'
+              className='btn btn-block btn-outline btn-success'
+            >
+              Create
+            </button>
+          )}
+        </div>
+      </form>
+
+      <Toast toastData={toastData} />
+    </>
   );
 }
 
