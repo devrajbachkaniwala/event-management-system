@@ -248,7 +248,9 @@ export class BookingsService implements IBookingsService {
     if (includeValues.price) {
       data.price = booking.event.prices.find((p) => p.id === booking.priceId);
 
-      data.price = EventPriceDtoFactory.create(data.price);
+      if (data.price) {
+        data.price = EventPriceDtoFactory.create(data.price);
+      }
     }
 
     if (includeValues.timing) {
@@ -256,7 +258,9 @@ export class BookingsService implements IBookingsService {
         (t) => t.id === booking.timingId
       );
 
-      data.timing = EventTimingDtoFactory.create(data.timing);
+      if (data.timing) {
+        data.timing = EventTimingDtoFactory.create(data.timing);
+      }
     }
 
     if (!includeValues.event) {
