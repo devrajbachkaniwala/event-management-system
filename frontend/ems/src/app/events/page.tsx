@@ -1,12 +1,13 @@
 'use client';
 
 import { Card } from '@/components/Card';
+import { Loading } from '@/components/Loading';
 import { EventDto } from '@/dto/event.dto';
 import { getAllEvents } from '@/utils/getAllEvents';
 import Link from 'next/link';
 import { ChangeEvent, useEffect, useState } from 'react';
 
-function Event() {
+function EventsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [events, setEvents] = useState<EventDto[]>();
   const [filteredEvents, setFilteredEvents] = useState<EventDto[]>();
@@ -33,7 +34,7 @@ function Event() {
   };
 
   if (isLoading) {
-    return <div className='text-center'>Loading...</div>;
+    return <Loading />;
   }
 
   return (
@@ -86,4 +87,4 @@ function Event() {
   );
 }
 
-export default Event;
+export default EventsPage;

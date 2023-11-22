@@ -1,5 +1,6 @@
 'use client';
 
+import { Loading } from '@/components/Loading';
 import { Toast } from '@/components/Toast';
 import { CreateBookingDto } from '@/dto/create-booking.dto';
 import { EventDto } from '@/dto/event.dto';
@@ -20,7 +21,7 @@ type TEventProps = {
   };
 };
 
-function Event({ params }: TEventProps) {
+function EventPage({ params }: TEventProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [event, setEvent] = useState<EventDto>();
 
@@ -112,7 +113,7 @@ function Event({ params }: TEventProps) {
   };
 
   if (isLoading) {
-    return <div className='text-center'>Loading...</div>;
+    return <Loading />;
   }
 
   return (
@@ -353,4 +354,4 @@ function Event({ params }: TEventProps) {
   );
 }
 
-export default Event;
+export default EventPage;

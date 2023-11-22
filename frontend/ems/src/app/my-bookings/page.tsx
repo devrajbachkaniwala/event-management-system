@@ -1,6 +1,7 @@
 'use client';
 
 import { EventBookingCard } from '@/components/EventBookingCard';
+import { Loading } from '@/components/Loading';
 import { Toast } from '@/components/Toast';
 import { BookingDto } from '@/dto/booking.dto';
 import { cancelBooking } from '@/utils/cancelBooking';
@@ -11,7 +12,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-function MyBookings() {
+function MyBookingsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isEventLoading, setIsEventLoading] = useState(true);
   const [activeBookings, setActiveBookings] = useState<BookingDto[]>();
@@ -94,7 +95,7 @@ function MyBookings() {
   };
 
   if (isLoading || isEventLoading) {
-    return <div className='text-center'>Loading...</div>;
+    return <Loading />;
   }
 
   return (
@@ -166,4 +167,4 @@ function MyBookings() {
   );
 }
 
-export default MyBookings;
+export default MyBookingsPage;

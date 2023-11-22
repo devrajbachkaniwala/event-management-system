@@ -1,11 +1,12 @@
 'use client';
 
 import { EventForm } from '@/components/EventForm';
+import { Loading } from '@/components/Loading';
 import { getProfile } from '@/utils/getProfile';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-function EventCreate() {
+function EventCreatePage() {
   const [isLoading, setIsLoading] = useState(true);
 
   const router = useRouter();
@@ -23,7 +24,7 @@ function EventCreate() {
   }, [router]);
 
   if (isLoading) {
-    return <div className='text-center'>Loading...</div>;
+    return <Loading />;
   }
 
   return (
@@ -36,4 +37,4 @@ function EventCreate() {
   );
 }
 
-export default EventCreate;
+export default EventCreatePage;

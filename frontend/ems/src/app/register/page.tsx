@@ -1,4 +1,5 @@
 'use client';
+import { Loading } from '@/components/Loading';
 import { RegisterUserDto } from '@/dto/register-user.dto';
 import { AuthService } from '@/services/auth-service';
 import { FileValidatorService } from '@/services/file-validator-service';
@@ -10,7 +11,7 @@ import { useRouter } from 'next/navigation';
 import { ChangeEvent, useEffect, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 
-function Register() {
+function RegisterPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   const [photoFile, setPhotoFile] = useState<File>();
@@ -85,7 +86,7 @@ function Register() {
   };
 
   if (isLoading) {
-    return <div className='text-center'>Loading...</div>;
+    return <Loading />;
   }
 
   return (
@@ -251,4 +252,4 @@ function Register() {
   );
 }
 
-export default Register;
+export default RegisterPage;

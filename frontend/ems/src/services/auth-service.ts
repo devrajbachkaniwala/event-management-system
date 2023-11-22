@@ -66,6 +66,21 @@ export class AuthService {
 
     return resData.data as TToken;
   }
+
+  static async logout(): Promise<{ message: string }> {
+    const url = `${EnvService.getServerUrl()}/v1/auth/logout`;
+    const res = await FetchService.post(url, {
+      authTokenType: 'accessToken'
+    });
+
+    const resData = await res.json();
+
+    if (!res.ok) {
+      throw new AuthServiceError(resData.message);
+    }
+
+    return resData.data as { message: string };
+  }
 }
 
 export class AuthServiceError extends Error {

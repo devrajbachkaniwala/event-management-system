@@ -1,15 +1,21 @@
 'use client';
+import { Loading } from '@/components/Loading';
+import { fetchProfile } from '@/redux/features/authSlice';
+import { useAppDispatch } from '@/redux/store';
 import { AuthService } from '@/services/auth-service';
 import { LocalStorageService } from '@/services/local-storage-service';
 import { getProfile } from '@/utils/getProfile';
+import { login } from '@/utils/login';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useEffect, useState } from 'react';
 
-function Login() {
+function LoginPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [errMsg, setErrMsg] = useState<string>('');
   const router = useRouter();
+
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
     getProfile().then((user) => {
@@ -34,11 +40,12 @@ function Login() {
         password
       };
 
-      const res = await AuthService.login(loginCredentials);
-      LocalStorageService.set('accessToken', res.accessToken);
-      LocalStorageService.set('refreshToken', res.refreshToken);
+      const res = await login(loginCredentials);
+      const user = await dispatch(fetchProfile()).unwrap();
 
-      router.replace('/');
+      if (user) {
+        router.replace('/');
+      }
     } catch (err: any) {
       console.log(err);
       setErrMsg(err.message);
@@ -46,7 +53,7 @@ function Login() {
   };
 
   if (isLoading) {
-    return <div className='text-center'>Loading...</div>;
+    return <Loading />;
   }
 
   return (
@@ -113,4 +120,4 @@ function Login() {
   );
 }
 
-export default Login;
+export default LoginPage;

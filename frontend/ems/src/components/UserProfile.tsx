@@ -1,13 +1,17 @@
 'use client';
 
 import { UpdateUserProfileDto } from '@/dto/update-user-profile.dto';
+import { fetchProfile } from '@/redux/features/authSlice';
+import { useAppDispatch } from '@/redux/store';
 import { FileValidatorService } from '@/services/file-validator-service';
+import { editUserProfile } from '@/utils/editUserProfile';
 import { getProfile } from '@/utils/getProfile';
 import { classValidatorResolver } from '@hookform/resolvers/class-validator';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { ChangeEvent, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
+import { Loading } from './Loading';
 
 function UserProfile() {
   const [isLoading, setIsLoading] = useState(true);
@@ -19,6 +23,8 @@ function UserProfile() {
   const [isFieldDisabled, setIsFieldDisabled] = useState(true);
 
   const router = useRouter();
+
+  const dispatch = useAppDispatch();
 
   const resolver = classValidatorResolver(UpdateUserProfileDto);
 
@@ -75,17 +81,24 @@ function UserProfile() {
     }
   };
 
-  const onSubmit: SubmitHandler<UpdateUserProfileDto & { email?: string }> = (
-    data
-  ) => {
+  const onSubmit: SubmitHandler<
+    UpdateUserProfileDto & { email?: string }
+  > = async (data) => {
     console.log(data);
     console.log(photoFile);
+
+    try {
+      const res = await editUserProfile(data, photoFile);
+      dispatch(fetchProfile());
+    } catch (err: any) {
+      console.log(err);
+    }
 
     setIsFieldDisabled(true);
   };
 
   if (isLoading) {
-    return <div className='text-center'>Loading...</div>;
+    return <Loading />;
   }
 
   return (

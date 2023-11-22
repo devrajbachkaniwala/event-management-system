@@ -1,11 +1,11 @@
 import { UserProfile } from '@/components/UserProfile';
 
-function ProfileEdit() {
+function ProfileEditPage() {
   return (
-    <div className='mx-6'>
+    <div className='mx-6 h-4/5 mb-1'>
       <UserProfile />
     </div>
   );
 }
 
-export default ProfileEdit;
+export default ProfileEditPage;

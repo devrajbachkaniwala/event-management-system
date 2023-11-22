@@ -1,6 +1,7 @@
 'use client';
 
 import { EventForm } from '@/components/EventForm';
+import { Loading } from '@/components/Loading';
 import { getEvent } from '@/utils/getEvent';
 import { getOrgEvents } from '@/utils/getOrgEvents';
 import { getProfile } from '@/utils/getProfile';
@@ -13,7 +14,7 @@ type TEventEditProps = {
   };
 };
 
-function EventEdit({ params: { id } }: TEventEditProps) {
+function EventEditPage({ params: { id } }: TEventEditProps) {
   const [isLoading, setIsLoading] = useState(true);
 
   const router = useRouter();
@@ -36,7 +37,7 @@ function EventEdit({ params: { id } }: TEventEditProps) {
   }, [router, id]);
 
   if (isLoading) {
-    return <div className='text-center'>Loading...</div>;
+    return <Loading />;
   }
 
   return (
@@ -49,4 +50,4 @@ function EventEdit({ params: { id } }: TEventEditProps) {
   );
 }
 
-export default EventEdit;
+export default EventEditPage;

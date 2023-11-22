@@ -1,11 +1,12 @@
 'use client';
 
+import { Loading } from '@/components/Loading';
 import { OrgForm } from '@/components/OrgForm';
 import { getProfile } from '@/utils/getProfile';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-function OrganizationEdit() {
+function OrganizationEditPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   const router = useRouter();
@@ -23,7 +24,7 @@ function OrganizationEdit() {
   }, [router]);
 
   if (isLoading) {
-    return <div className='text-center'>Loading...</div>;
+    return <Loading />;
   }
 
   return (
@@ -33,4 +34,4 @@ function OrganizationEdit() {
   );
 }
 
-export default OrganizationEdit;
+export default OrganizationEditPage;

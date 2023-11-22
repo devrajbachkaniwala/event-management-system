@@ -1,6 +1,7 @@
 'use client';
 
 import { Card } from '@/components/Card';
+import { Loading } from '@/components/Loading';
 import { EventDto } from '@/dto/event.dto';
 import { getOrgEvents } from '@/utils/getOrgEvents';
 import { getProfile } from '@/utils/getProfile';
@@ -8,7 +9,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-function OrgEvents() {
+function OrgEventsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isEventLoading, setIsEventLoading] = useState(true);
   const [events, setEvents] = useState<EventDto[]>();
@@ -36,7 +37,7 @@ function OrgEvents() {
   }, [router]);
 
   if (isLoading || isEventLoading) {
-    return <div className='text-center'>Loading...</div>;
+    return <Loading />;
   }
 
   return (
@@ -67,4 +68,4 @@ function OrgEvents() {
   );
 }
 
-export default OrgEvents;
+export default OrgEventsPage;
