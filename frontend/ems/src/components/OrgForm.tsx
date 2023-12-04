@@ -1,7 +1,10 @@
 'use client';
 
 import { CreateOrganizationDto } from '@/dto/create-organization.dto';
+import { UpdateOrganizationDto } from '@/dto/update-organization.dto';
 import { FileValidatorService } from '@/services/file-validator-service';
+import { createOrg } from '@/utils/createOrg';
+import { editOrg } from '@/utils/editOrg';
 import { getOrg } from '@/utils/getOrg';
 import { getProfile } from '@/utils/getProfile';
 import { classValidatorResolver } from '@hookform/resolvers/class-validator';
@@ -45,6 +48,7 @@ function OrgForm({ isEditForm }: TOrgFormProps) {
         const org = await getOrg();
 
         if (org) {
+          setPhotoUrl(org.photoUrl);
           setIsLoading(false);
           return org;
         }
@@ -88,12 +92,39 @@ function OrgForm({ isEditForm }: TOrgFormProps) {
     }
   };
 
+  const handleCreateOrg = async (
+    createOrgDto: CreateOrganizationDto,
+    photoFile: File | undefined
+  ) => {
+    if (!photoFile) {
+      setPhotoErrMsg('Photo file is required');
+      return;
+    }
+
+    const org = await createOrg(createOrgDto, photoFile);
+    console.log(org);
+
+    router.push('/organization/edit');
+  };
+
+  const handleEditOrg = async (
+    updateOrgDto: UpdateOrganizationDto,
+    photoFile: File | undefined
+  ) => {
+    const org = await editOrg(updateOrgDto, photoFile);
+    console.log(org);
+
+    setIsFieldDisabled(true);
+  };
+
   const onSubmit: SubmitHandler<CreateOrganizationDto> = (data) => {
     console.log(data);
     console.log(photoFile);
 
     if (isEditForm) {
-      setIsFieldDisabled(true);
+      handleEditOrg(data, photoFile);
+    } else {
+      handleCreateOrg(data, photoFile);
     }
   };
 

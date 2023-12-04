@@ -57,6 +57,14 @@ export function Navbar() {
                   </Link>
                 </li>
                 <li>
+                  <Link
+                    href={'/organization/team-members'}
+                    className='justify-between'
+                  >
+                    My team members
+                  </Link>
+                </li>
+                <li>
                   <a href='/organization/events'>My events</a>
                 </li>
               </ul>
