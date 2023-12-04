@@ -1,20 +1,25 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { IEventPhotosService } from './event-photos-service.interface';
 import { EventPhotoDto, EventPhotoDtoFactory } from '../dto';
-import {
-  IPrismaApiService,
-  prismaApiServiceToken
-} from 'src/app/modules/prisma';
 import { ConfigService } from '@nestjs/config';
 import { EventPhotoErrorFactory } from '../errors';
 import { unlink } from 'fs';
+import {
+  IDaoFactory,
+  daoFactoryToken
+} from 'src/app/modules/dao/dao-factory/dao-factory.interface';
+import { IEventPhotoDao } from 'src/app/modules/dao/event-photo-dao/event-photo-dao.interface';
 
 @Injectable()
 export class EventPhotosService implements IEventPhotosService {
+  private eventPhotoDao: IEventPhotoDao;
+
   constructor(
-    @Inject(prismaApiServiceToken) private readonly prisma: IPrismaApiService,
+    @Inject(daoFactoryToken) daoFactory: IDaoFactory,
     private readonly configService: ConfigService
-  ) {}
+  ) {
+    this.eventPhotoDao = daoFactory.getEventPhotoDao();
+  }
 
   async create(
     orgId: string,
@@ -26,23 +31,13 @@ export class EventPhotosService implements IEventPhotosService {
         ? this.generatePhotoUrl(eventId, eventPhotoFile.filename)
         : undefined;
 
-      const event = await this.prisma.event.update({
-        where: {
-          id: eventId,
-          organization: {
-            id: orgId
-          }
-        },
-        data: {
-          photos: {
-            push: {
-              photoUrl: photoUrl
-            }
-          }
-        }
-      });
+      const eventPhoto = await this.eventPhotoDao.create(
+        orgId,
+        eventId,
+        photoUrl
+      );
 
-      return EventPhotoDtoFactory.create(event.photos.pop());
+      return EventPhotoDtoFactory.create(eventPhoto);
     } catch (err: any) {
       throw EventPhotoErrorFactory.create(
         err,
@@ -53,13 +48,9 @@ export class EventPhotosService implements IEventPhotosService {
 
   async findAll(eventId: string): Promise<EventPhotoDto[]> {
     try {
-      const event = await this.prisma.event.findUnique({
-        where: {
-          id: eventId
-        }
-      });
+      const eventPhotos = await this.eventPhotoDao.findAll(eventId);
 
-      return event.photos.map(EventPhotoDtoFactory.create);
+      return eventPhotos.map(EventPhotoDtoFactory.create);
     } catch (err: any) {
       throw EventPhotoErrorFactory.create(
         err,
@@ -78,16 +69,7 @@ export class EventPhotosService implements IEventPhotosService {
 
   async remove(orgId: string, eventId: string, photoId: string): Promise<true> {
     try {
-      const event = await this.prisma.event.findUnique({
-        where: {
-          id: eventId,
-          organization: {
-            id: orgId
-          }
-        }
-      });
-
-      const eventPhoto = event.photos.find((p) => p.id === photoId);
+      const eventPhoto = await this.eventPhotoDao.findOne(eventId, photoId);
 
       if (eventPhoto) {
         const filename = eventPhoto.photoUrl.split('/').pop();
@@ -100,23 +82,11 @@ export class EventPhotosService implements IEventPhotosService {
         );
       }
 
-      const updateEvent = await this.prisma.event.update({
-        where: {
-          id: eventId,
-          organization: {
-            id: orgId
-          }
-        },
-        data: {
-          photos: {
-            deleteMany: {
-              where: {
-                id: photoId
-              }
-            }
-          }
-        }
-      });
+      const isPhotoDeleted = await this.eventPhotoDao.remove(
+        orgId,
+        eventId,
+        photoId
+      );
 
       return true;
     } catch (err: any) {

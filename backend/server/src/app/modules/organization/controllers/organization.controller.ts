@@ -20,8 +20,8 @@ import {
   OrganizationDto,
   UpdateOrganizationDto
 } from '../dto';
-import { ResErrorDtoFactory, ResSuccessDtoFactory, UserDto } from 'src/app/dto';
-import { GetOrgId, GetReqUser, Public, Roles } from 'src/app/decorators';
+import { ResErrorDtoFactory, ResSuccessDtoFactory } from 'src/app/dto';
+import { GetOrgId, GetUserId, Public, Roles } from 'src/app/decorators';
 import { IOrganizationService, organizationServiceToken } from '../services';
 import { Role } from '@prisma/client';
 import { RoleGuard } from 'src/app/guards';
@@ -72,13 +72,13 @@ export class OrganizationController {
       })
     )
     file: Express.Multer.File,
-    @GetReqUser() reqUser: { user: UserDto; jti: string },
+    @GetUserId() userId: string,
     @Body() createOrganizationDto: CreateOrganizationDto
   ) {
     let organizationDto: OrganizationDto = null;
     try {
       organizationDto = await this.organizationsService.create(
-        reqUser.user.id,
+        userId,
         createOrganizationDto,
         file
       );
@@ -92,12 +92,10 @@ export class OrganizationController {
   @Get()
   @Roles([Role.TEAM_MEMBER])
   @UseGuards(RoleGuard)
-  async findOne(@GetReqUser() reqUser: { user: UserDto; jti: string }) {
+  async findOne(@GetUserId() userId: string, @GetOrgId() orgId: string) {
     let organizationDto: OrganizationDto = null;
     try {
-      organizationDto = await this.organizationsService.findOne(
-        reqUser.user.id
-      );
+      organizationDto = await this.organizationsService.findOne(userId, orgId);
     } catch (err: any) {
       throw ResErrorDtoFactory.create(err, 'Failed to get an organization');
     }
@@ -155,13 +153,15 @@ export class OrganizationController {
       })
     )
     file: Express.Multer.File,
-    @GetReqUser() reqUser: { user: UserDto; jti: string },
+    @GetUserId() userId: string,
+    @GetOrgId() orgId: string,
     @Body() updateOrganizationDto: UpdateOrganizationDto
   ) {
     let organizationDto: OrganizationDto = null;
     try {
       organizationDto = await this.organizationsService.update(
-        reqUser.user.id,
+        userId,
+        orgId,
         updateOrganizationDto,
         file
       );
@@ -175,10 +175,10 @@ export class OrganizationController {
   @Delete()
   @Roles([Role.ORGANIZATION_CREATOR])
   @UseGuards(RoleGuard)
-  async remove(@GetReqUser() reqUser: { user: UserDto; jti: string }) {
+  async remove(@GetUserId() userId: string, @GetOrgId() orgId: string) {
     let isRemoved: boolean = false;
     try {
-      isRemoved = await this.organizationsService.remove(reqUser.user.id);
+      isRemoved = await this.organizationsService.remove(userId, orgId);
     } catch (err: any) {
       throw ResErrorDtoFactory.create(err, 'Failed to remove an organization');
     }

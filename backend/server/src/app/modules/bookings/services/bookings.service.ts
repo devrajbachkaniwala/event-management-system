@@ -7,32 +7,40 @@ import {
   TBookingInclude
 } from '../dto';
 import { IBookingsService } from './bookings-service.interface';
-import { IPrismaApiService, prismaApiServiceToken } from '../../prisma';
 import { BookingError, BookingErrorFactory } from '../errors';
 import {
   EventDtoFactory,
   EventPriceDtoFactory,
   EventTimingDtoFactory
 } from '../../events';
-import { Booking, BookingStatus } from '@prisma/client';
+import { Booking } from '@prisma/client';
 import { OrganizationDtoFactory } from '../../organization';
+import { IEventDao } from '../../dao/event-dao/event-dao.interface';
+import { IEventPriceDao } from '../../dao/event-price-dao/event-price-dao.interface';
+import { IBookingDao } from '../../dao/booking-dao/booking-dao.interface';
+import {
+  IDaoFactory,
+  daoFactoryToken
+} from '../../dao/dao-factory/dao-factory.interface';
 
 @Injectable()
 export class BookingsService implements IBookingsService {
-  constructor(
-    @Inject(prismaApiServiceToken) private readonly prisma: IPrismaApiService
-  ) {}
+  private eventDao: IEventDao;
+  private eventPriceDao: IEventPriceDao;
+  private bookingDao: IBookingDao;
+
+  constructor(@Inject(daoFactoryToken) daoFactory: IDaoFactory) {
+    this.eventDao = daoFactory.getEventDao();
+    this.eventPriceDao = daoFactory.getEventPriceDao();
+    this.bookingDao = daoFactory.getBookingDao();
+  }
 
   async create(
     userId: string,
     createBookingDto: CreateBookingDto
   ): Promise<BookingDto> {
     try {
-      const event = await this.prisma.event.findUnique({
-        where: {
-          id: createBookingDto.eventId
-        }
-      });
+      const event = await this.eventDao.findOne(createBookingDto.eventId);
 
       if (!event) {
         throw new BookingError('Event not found');
@@ -67,50 +75,14 @@ export class BookingsService implements IBookingsService {
         }
       }
 
-      const booking = await this.prisma.booking.create({
-        data: {
-          qty: createBookingDto.qty,
+      const booking = await this.bookingDao.create(userId, createBookingDto);
 
-          user: {
-            connect: {
-              id: userId
-            }
-          },
-
-          event: {
-            connect: {
-              id: createBookingDto.eventId
-            }
-          },
-
-          organization: {
-            connect: {
-              id: createBookingDto.orgId
-            }
-          },
-
-          timingId: createBookingDto.timingId,
-          priceId: createBookingDto.priceId
-        }
-      });
-
-      const updateEvent = await this.prisma.event.update({
-        where: {
-          id: createBookingDto.eventId
-        },
-        data: {
-          prices: {
-            updateMany: {
-              where: {
-                id: createBookingDto.priceId
-              },
-              data: {
-                sold: eventPrice.sold + createBookingDto.qty
-              }
-            }
-          }
-        }
-      });
+      const updateEvent = await this.eventPriceDao.update(
+        booking.orgId,
+        booking.eventId,
+        booking.priceId,
+        { sold: eventPrice.sold + createBookingDto.qty }
+      );
 
       return BookingDtoFactory.create(booking);
     } catch (err: any) {
@@ -132,16 +104,9 @@ export class BookingsService implements IBookingsService {
       const includeEvent =
         includeKeyVal.price || includeKeyVal.timing || includeKeyVal.event;
 
-      const bookings = await this.prisma.booking.findMany({
-        where: {
-          user: {
-            id: userId
-          }
-        },
-        include: {
-          organization: includeKeyVal.organization,
-          event: includeEvent
-        }
+      const bookings = await this.bookingDao.findAll(userId, {
+        organization: includeKeyVal.organization,
+        event: includeEvent
       });
 
       return bookings.map((b) =>
@@ -171,17 +136,9 @@ export class BookingsService implements IBookingsService {
       const includeEvent =
         includeKeyVal.price || includeKeyVal.timing || includeKeyVal.event;
 
-      const booking = await this.prisma.booking.findUnique({
-        where: {
-          id: bookingId,
-          user: {
-            id: userId
-          }
-        },
-        include: {
-          organization: includeKeyVal.organization,
-          event: includeEvent
-        }
+      const booking = await this.bookingDao.findOne(userId, bookingId, {
+        organization: includeKeyVal.organization,
+        event: includeEvent
       });
 
       return this.makeBookingDtoWithInclude(booking, includeKeyVal);
@@ -193,37 +150,26 @@ export class BookingsService implements IBookingsService {
 
   async cancelBooking(userId: string, bookingId: string): Promise<true> {
     try {
-      const booking = await this.prisma.booking.update({
-        where: {
-          id: bookingId,
-          user: {
-            id: userId
-          }
-        },
-        data: {
-          status: BookingStatus.CANCEL
-        }
+      const isBookingCancelled = await this.bookingDao.cancelBooking(
+        userId,
+        bookingId
+      );
+
+      const booking = await this.bookingDao.findOne(userId, bookingId, {
+        event: true
       });
 
-      const updateEvent = await this.prisma.event.update({
-        where: {
-          id: booking.eventId
-        },
-        data: {
-          prices: {
-            updateMany: {
-              where: {
-                id: booking.priceId
-              },
-              data: {
-                sold: {
-                  decrement: booking.qty
-                }
-              }
-            }
-          }
-        }
-      });
+      const eventPrice = await this.eventPriceDao.findOne(
+        booking.eventId,
+        booking.priceId
+      );
+
+      const updateEventPrice = await this.eventPriceDao.update(
+        booking.orgId,
+        booking.eventId,
+        booking.priceId,
+        { sold: eventPrice.sold - booking.qty }
+      );
 
       return true;
     } catch (err: any) {

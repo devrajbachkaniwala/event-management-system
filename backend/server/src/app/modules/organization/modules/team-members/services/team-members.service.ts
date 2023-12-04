@@ -1,57 +1,46 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ITeamMembersService } from './team-members-service.interface';
 import { UserDto, UserDtoFactory } from 'src/app/dto';
-import {
-  IPrismaApiService,
-  prismaApiServiceToken
-} from 'src/app/modules/prisma';
 import { OrganizationError, OrganizationErrorFactory } from '../../../errors';
 import { Role } from '@prisma/client';
+import { IOrganizationDao } from 'src/app/modules/dao/organization-dao/organization-dao.interface';
+import {
+  IDaoFactory,
+  daoFactoryToken
+} from 'src/app/modules/dao/dao-factory/dao-factory.interface';
+import { IUserDao } from 'src/app/modules/dao/user-dao/user-dao.interface';
 
 @Injectable()
 export class TeamMembersService implements ITeamMembersService {
-  constructor(
-    @Inject(prismaApiServiceToken) private readonly prisma: IPrismaApiService
-  ) {}
+  private organizationDao: IOrganizationDao;
+  private userDao: IUserDao;
+
+  constructor(@Inject(daoFactoryToken) daoFactory: IDaoFactory) {
+    this.organizationDao = daoFactory.getOrganizationDao();
+    this.userDao = daoFactory.getUserDao();
+  }
 
   async addTeamMember(
     orgId: string,
     teamMemberEmail: string
   ): Promise<UserDto> {
     try {
-      const teamMemberExists = await this.prisma.user.findUnique({
-        where: {
-          email: teamMemberEmail
-        },
-        include: {
-          organization: true
-        }
-      });
+      const teamMemberExists = await this.userDao.findByEmail(teamMemberEmail);
 
       if (!teamMemberExists) {
         throw new OrganizationError('User is not registered');
       }
 
-      if (teamMemberExists.organization) {
+      if (teamMemberExists.orgId) {
         throw new OrganizationError(
           'User is already a part of current or another organization'
         );
       }
 
-      const user = await this.prisma.user.update({
-        where: {
-          email: teamMemberEmail
-        },
-        data: {
-          role: Role.TEAM_MEMBER,
-
-          organization: {
-            connect: {
-              id: orgId
-            }
-          }
-        }
-      });
+      const user = await this.organizationDao.addTeamMember(
+        orgId,
+        teamMemberEmail
+      );
 
       return UserDtoFactory.create(user);
     } catch (err: any) {
@@ -74,18 +63,7 @@ export class TeamMembersService implements ITeamMembersService {
         );
       }
 
-      const user = await this.prisma.user.update({
-        where: {
-          id: teamMemberId
-        },
-        data: {
-          role: Role.USER,
-
-          organization: {
-            disconnect: true
-          }
-        }
-      });
+      const user = await this.organizationDao.removeTeamMember(teamMemberId);
 
       return true;
     } catch (err: any) {
@@ -99,16 +77,9 @@ export class TeamMembersService implements ITeamMembersService {
 
   async findAllTeamMembers(orgId: string): Promise<UserDto[]> {
     try {
-      const organization = await this.prisma.organization.findUnique({
-        where: {
-          id: orgId
-        },
-        include: {
-          teamMembers: true
-        }
-      });
+      const teamMembers = await this.organizationDao.findAllTeamMembers(orgId);
 
-      const users = organization.teamMembers.map(UserDtoFactory.create);
+      const users = teamMembers.map(UserDtoFactory.create);
 
       return users;
     } catch (err: any) {

@@ -7,20 +7,28 @@ import {
 } from '../dto';
 import { OrganizationError, OrganizationErrorFactory } from '../errors';
 import { Role } from '@prisma/client';
-import {
-  IPrismaApiService,
-  prismaApiServiceToken
-} from '../../prisma/services';
 import { IOrganizationService } from './organization-service.interface';
 import { ConfigService } from '@nestjs/config';
 import { EventDto, EventDtoFactory } from '../../events';
+import {
+  IDaoFactory,
+  daoFactoryToken
+} from '../../dao/dao-factory/dao-factory.interface';
+import { IOrganizationDao } from '../../dao/organization-dao/organization-dao.interface';
+import { IUserDao } from '../../dao/user-dao/user-dao.interface';
 
 @Injectable()
 export class OrganizationService implements IOrganizationService {
+  private organizationDao: IOrganizationDao;
+  private userDao: IUserDao;
+
   constructor(
-    @Inject(prismaApiServiceToken) private readonly prisma: IPrismaApiService,
+    @Inject(daoFactoryToken) daoFactory: IDaoFactory,
     private readonly configService: ConfigService
-  ) {}
+  ) {
+    this.organizationDao = daoFactory.getOrganizationDao();
+    this.userDao = daoFactory.getUserDao();
+  }
 
   async create(
     userId: string,
@@ -32,29 +40,16 @@ export class OrganizationService implements IOrganizationService {
         ? this.generatePhotoUrl(orgPhotoFile.filename)
         : undefined;
 
-      const user = await this.prisma.user.update({
-        where: {
-          id: userId
-        },
-        data: {
-          role: Role.ORGANIZATION_CREATOR,
-
-          organization: {
-            create: {
-              name: createOrganizationDto.name,
-              description: createOrganizationDto.description,
-              email: createOrganizationDto.email,
-              contactNo: createOrganizationDto.contactNo,
-              photoUrl: photoUrl
-            }
-          }
-        },
-        include: {
-          organization: true
-        }
+      const organization = await this.organizationDao.create(userId, {
+        ...createOrganizationDto,
+        photoUrl
       });
 
-      return OrganizationDtoFactory.create(user.organization);
+      const user = await this.userDao.update(userId, {
+        role: Role.ORGANIZATION_CREATOR
+      });
+
+      return OrganizationDtoFactory.create(organization);
     } catch (err: any) {
       console.log(err);
       throw OrganizationErrorFactory.create(
@@ -64,23 +59,17 @@ export class OrganizationService implements IOrganizationService {
     }
   }
 
-  async findOne(userId: string): Promise<OrganizationDto> {
+  async findOne(userId: string, orgId: string): Promise<OrganizationDto> {
     try {
-      const user = await this.prisma.user.findUnique({
-        where: {
-          id: userId
-        },
-        include: {
-          organization: true
-        }
-      });
+      const organization = await this.organizationDao.findOne(userId, orgId);
 
-      if (!user.organization) {
+      if (!organization) {
         throw new OrganizationError('User is not a part of an organization');
       }
 
-      return OrganizationDtoFactory.create(user.organization);
+      return OrganizationDtoFactory.create(organization);
     } catch (err: any) {
+      console.log(err);
       throw OrganizationErrorFactory.create(
         err,
         'Failed to get an organization'
@@ -90,16 +79,11 @@ export class OrganizationService implements IOrganizationService {
 
   async getOrgEvents(orgId: string): Promise<EventDto[]> {
     try {
-      const events = await this.prisma.event.findMany({
-        where: {
-          organization: {
-            id: orgId
-          }
-        }
-      });
+      const events = await this.organizationDao.getOrgEvents(orgId);
 
       return events.map(EventDtoFactory.create);
     } catch (err: any) {
+      console.log(err);
       throw OrganizationErrorFactory.create(
         err,
         'Failed to get an organization events'
@@ -109,6 +93,7 @@ export class OrganizationService implements IOrganizationService {
 
   async update(
     userId: string,
+    orgId: string,
     updateOrganizationDto: UpdateOrganizationDto,
     orgPhotoFile: Express.Multer.File
   ): Promise<OrganizationDto> {
@@ -117,32 +102,18 @@ export class OrganizationService implements IOrganizationService {
         ? this.generatePhotoUrl(orgPhotoFile.filename)
         : undefined;
 
-      const user = await this.prisma.user.update({
-        where: {
-          id: userId
-        },
-        data: {
-          organization: {
-            update: {
-              name: updateOrganizationDto.name,
-              description: updateOrganizationDto.description,
-              email: updateOrganizationDto.email,
-              contactNo: updateOrganizationDto.contactNo,
-              photoUrl: photoUrl
-            }
-          }
-        },
-        include: {
-          organization: true
-        }
+      const organization = await this.organizationDao.update(userId, orgId, {
+        ...updateOrganizationDto,
+        photoUrl
       });
 
-      if (!user.organization) {
+      if (!organization) {
         throw new OrganizationError('User is not a part of an organization');
       }
 
-      return OrganizationDtoFactory.create(user.organization);
+      return OrganizationDtoFactory.create(organization);
     } catch (err: any) {
+      console.log(err);
       throw OrganizationErrorFactory.create(
         err,
         'Failed to update an organization'
@@ -150,23 +121,11 @@ export class OrganizationService implements IOrganizationService {
     }
   }
 
-  async remove(userId: string): Promise<true> {
+  async remove(userId: string, orgId: string): Promise<true> {
     try {
-      const user = await this.prisma.user.update({
-        where: {
-          id: userId
-        },
-        data: {
-          role: Role.USER,
+      const organization = await this.organizationDao.remove(userId, orgId);
 
-          organization: {
-            delete: true
-          }
-        },
-        include: {
-          organization: true
-        }
-      });
+      const user = await this.userDao.update(userId, { role: Role.USER });
 
       return true;
     } catch (err: any) {

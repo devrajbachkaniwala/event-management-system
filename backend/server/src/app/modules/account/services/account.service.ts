@@ -4,14 +4,22 @@ import { UpdateUserProfileDto } from '../dto';
 import { UserDto, UserDtoFactory } from 'src/app/dto';
 import { AccountErrorFactory } from '../errors';
 import { ConfigService } from '@nestjs/config';
-import { IPrismaApiService, prismaApiServiceToken } from '../../prisma';
+import {
+  IDaoFactory,
+  daoFactoryToken
+} from '../../dao/dao-factory/dao-factory.interface';
+import { IUserDao } from '../../dao/user-dao/user-dao.interface';
 
 @Injectable()
 export class AccountService implements IAccountService {
+  private userDao: IUserDao;
+
   constructor(
-    @Inject(prismaApiServiceToken) private readonly prisma: IPrismaApiService,
+    @Inject(daoFactoryToken) daoFactory: IDaoFactory,
     private readonly configService: ConfigService
-  ) {}
+  ) {
+    this.userDao = daoFactory.getUserDao();
+  }
 
   async updateUserProfile(
     userId: string,
@@ -23,15 +31,9 @@ export class AccountService implements IAccountService {
         ? this.generatePhotoUrl(userPhotoFile.filename)
         : undefined;
 
-      const user = await this.prisma.user.update({
-        where: {
-          id: userId
-        },
-        data: {
-          fullName: updateUserProfile.fullName,
-          username: updateUserProfile.username,
-          userPhotoUrl: photoUrl
-        }
+      const user = await this.userDao.update(userId, {
+        ...updateUserProfile,
+        photoUrl
       });
 
       return UserDtoFactory.create(user);
@@ -42,11 +44,7 @@ export class AccountService implements IAccountService {
 
   async getUserProfile(userId: string): Promise<UserDto> {
     try {
-      const user = await this.prisma.user.findUnique({
-        where: {
-          id: userId
-        }
-      });
+      const user = await this.userDao.findById(userId);
 
       return UserDtoFactory.create(user);
     } catch (err: any) {

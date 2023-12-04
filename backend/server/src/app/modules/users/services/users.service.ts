@@ -7,18 +7,26 @@ import {
   UserDtoFactory,
   UserInclude
 } from 'src/app/dto';
-import { IPrismaApiService, prismaApiServiceToken } from '../../prisma';
 import { UserError, UserErrorFactory } from '../errors';
 import { IBookingsService, bookingsServiceToken } from '../../bookings';
 import { User } from '@prisma/client';
+import {
+  IDaoFactory,
+  daoFactoryToken
+} from '../../dao/dao-factory/dao-factory.interface';
+import { IUserDao } from '../../dao/user-dao/user-dao.interface';
 
 @Injectable()
 export class UsersService implements IUsersService {
+  private userDao: IUserDao;
+
   constructor(
-    @Inject(prismaApiServiceToken) private readonly prisma: IPrismaApiService,
     @Inject(bookingsServiceToken)
-    private readonly bookingsServie: IBookingsService
-  ) {}
+    private readonly bookingsServie: IBookingsService,
+    @Inject(daoFactoryToken) daoFactory: IDaoFactory
+  ) {
+    this.userDao = daoFactory.getUserDao();
+  }
 
   // create(createUserDto: CreateUserDto) {
   //   return 'This action adds a new user';
@@ -26,7 +34,7 @@ export class UsersService implements IUsersService {
 
   async findAll(): Promise<UserDto[]> {
     try {
-      const users = await this.prisma.user.findMany();
+      const users = await this.userDao.findAll();
 
       return users.map(UserDtoFactory.create);
     } catch (err: any) {
@@ -46,11 +54,7 @@ export class UsersService implements IUsersService {
         includeKeyVal[item] = true;
       });
 
-      const user = await this.prisma.user.findUnique({
-        where: {
-          id: userId
-        }
-      });
+      const user = await this.userDao.findById(userId);
 
       if (!user) {
         throw new UserError('User not found', 404);
@@ -76,13 +80,8 @@ export class UsersService implements IUsersService {
     moderateUserDto: ModerateUserDto
   ): Promise<UserDto> {
     try {
-      const user = await this.prisma.user.update({
-        where: {
-          id: userId
-        },
-        data: {
-          isActive: moderateUserDto.isActive
-        }
+      const user = await this.userDao.update(userId, {
+        isActive: moderateUserDto.isActive
       });
 
       return UserDtoFactory.create(user);

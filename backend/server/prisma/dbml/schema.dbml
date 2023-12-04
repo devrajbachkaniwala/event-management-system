@@ -22,9 +22,9 @@ Table users {
 
 Table user_tokens {
   id String [pk]
-  accessToken String [not null]
+  accessToken String [unique, not null]
   accessTokenExpiredAt DateTime [not null]
-  refreshToken String [not null]
+  refreshToken String [unique, not null]
   refreshTokenExpiredAt DateTime [not null]
   createdAt DateTime [default: `now()`, not null]
   modifiedAt DateTime [not null]

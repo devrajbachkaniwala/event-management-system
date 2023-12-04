@@ -49,9 +49,9 @@ enum Role {
 
 model UserToken {
   id                    String   @id @default(auto()) @map("_id") @db.ObjectId
-  accessToken           String
+  accessToken           String   @unique
   accessTokenExpiredAt  DateTime
-  refreshToken          String
+  refreshToken          String   @unique
   refreshTokenExpiredAt DateTime
 
   createdAt  DateTime @default(now())

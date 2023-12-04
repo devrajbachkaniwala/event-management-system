@@ -12,6 +12,7 @@ import {
 } from './modules';
 import { APP_GUARD, APP_PIPE } from '@nestjs/core';
 import { JwtAuthAccessGuard } from './guards';
+import { DaoModule } from './modules/dao/dao.module';
 
 @Module({
   imports: [
@@ -25,7 +26,8 @@ import { JwtAuthAccessGuard } from './guards';
     OrganizationModule,
     EventsModule,
     BookingsModule,
-    UsersModule
+    UsersModule,
+    DaoModule
   ],
   providers: [
     {

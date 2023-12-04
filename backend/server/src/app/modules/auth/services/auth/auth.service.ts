@@ -18,7 +18,7 @@ import {
   UserEmailAlreadyExists,
   UserNotFound
 } from '../../errors';
-import { Role, User, UserToken } from '@prisma/client';
+import { Role } from '@prisma/client';
 import {
   IEncryptService,
   IUuidService,
@@ -28,32 +28,36 @@ import {
 import { UserDto, UserDtoFactory } from 'src/app/dto';
 import { ConfigService } from '@nestjs/config';
 import {
-  IPrismaApiService,
-  prismaApiServiceToken
-} from 'src/app/modules/prisma';
+  IDaoFactory,
+  daoFactoryToken
+} from 'src/app/modules/dao/dao-factory/dao-factory.interface';
+import { IUserTokenDao } from 'src/app/modules/dao/user-token-dao/user-token-dao.interface';
+import { IUserDao } from 'src/app/modules/dao/user-dao/user-dao.interface';
 
 @Injectable()
 export class AuthService implements IAuthService {
+  private userTokenDao: IUserTokenDao;
+  private userDao: IUserDao;
+
   constructor(
-    @Inject(prismaApiServiceToken) private readonly prisma: IPrismaApiService,
+    @Inject(daoFactoryToken) daoFactory: IDaoFactory,
     @Inject(jwtTokenServiceToken)
     private readonly tokenService: IJwtTokenService,
     @Inject(uuidServiceToken) private readonly uuidService: IUuidService,
     @Inject(encryptServiceToken)
     private readonly encryptService: IEncryptService,
     private readonly configService: ConfigService
-  ) {}
+  ) {
+    this.userDao = daoFactory.getUserDao();
+    this.userTokenDao = daoFactory.getUserTokenDao();
+  }
 
   async register(
     userDto: RegisterUserDto,
     userPhotoFile: Express.Multer.File
   ): Promise<UserDto> {
     try {
-      const userEmailExist: User = await this.prisma.user.findUnique({
-        where: {
-          email: userDto.email
-        }
-      });
+      const userEmailExist = await this.userDao.findByEmail(userDto.email);
 
       if (userEmailExist) {
         throw new UserEmailAlreadyExists();
@@ -71,15 +75,10 @@ export class AuthService implements IAuthService {
       );
       userDto.password = hashPassword;
 
-      const user: User = await this.prisma.user.create({
-        data: {
-          fullName: userDto.fullName,
-          username: userDto.username,
-          email: userDto.email,
-          password: userDto.password,
-          role: isAdmin ? Role.ADMIN : undefined,
-          userPhotoUrl: photoUrl
-        }
+      const user = await this.userDao.create({
+        ...userDto,
+        role: isAdmin ? Role.ADMIN : undefined,
+        photoUrl
       });
 
       return UserDtoFactory.create(user);
@@ -91,11 +90,7 @@ export class AuthService implements IAuthService {
 
   async login(userDto: LoginUserDto): Promise<TokensDto> {
     try {
-      const userExists: User = await this.prisma.user.findUnique({
-        where: {
-          email: userDto.email
-        }
-      });
+      const userExists = await this.userDao.findByEmail(userDto.email);
 
       if (!userExists) {
         throw new UserNotFound();
@@ -123,14 +118,11 @@ export class AuthService implements IAuthService {
       const refreshTokenExpiredAt: number =
         Date.now() + 1000 * 60 * 60 * 24 * 2;
 
-      const userToken: UserToken = await this.prisma.userToken.create({
-        data: {
-          accessToken: accessJti,
-          refreshToken: refreshJti,
-          accessTokenExpiredAt: new Date(accessTokenExpiredAt),
-          refreshTokenExpiredAt: new Date(refreshTokenExpiredAt),
-          userId: userExists.id
-        }
+      const userToken = await this.userTokenDao.create(userExists.id, {
+        accessJti,
+        refreshJti,
+        accessTokenExpiredAt: new Date(accessTokenExpiredAt),
+        refreshTokenExpiredAt: new Date(refreshTokenExpiredAt)
       });
 
       const payload = {
@@ -163,36 +155,21 @@ export class AuthService implements IAuthService {
       if (logoutUserDto.allDevices) {
         // Logout all devices
 
-        const userTokens = await this.prisma.userToken.updateMany({
-          where: {
-            userId
-          },
-          data: {
-            accessTokenExpiredAt: new Date(0),
-            refreshTokenExpiredAt: new Date(0)
-          }
+        const userTokens = await this.userTokenDao.updateAllByUserId(userId, {
+          accessTokenExpiredAt: new Date(0),
+          refreshTokenExpiredAt: new Date(0)
         });
       } else {
         // Logout particular device with accessJti
 
-        const user = await this.prisma.user.update({
-          where: {
-            id: userId
-          },
-          data: {
-            tokens: {
-              updateMany: {
-                where: {
-                  accessToken: accessJti
-                },
-                data: {
-                  accessTokenExpiredAt: new Date(0),
-                  refreshTokenExpiredAt: new Date(0)
-                }
-              }
-            }
+        const userToken = await this.userTokenDao.updateByAccessJti(
+          userId,
+          accessJti,
+          {
+            accessTokenExpiredAt: new Date(0),
+            refreshTokenExpiredAt: new Date(0)
           }
-        });
+        );
       }
 
       return true;
@@ -208,24 +185,14 @@ export class AuthService implements IAuthService {
       // 2 hour
       const accessTokenExpiredAt: number = Date.now() + 1000 * 60 * 60 * 2;
 
-      const user = await this.prisma.user.update({
-        where: {
-          id: userDto.id
-        },
-        data: {
-          tokens: {
-            updateMany: {
-              where: {
-                refreshToken: refreshJti
-              },
-              data: {
-                accessToken: accessJti,
-                accessTokenExpiredAt: new Date(accessTokenExpiredAt)
-              }
-            }
-          }
+      const userToken = await this.userTokenDao.updateByRefreshJti(
+        userDto.id,
+        refreshJti,
+        {
+          accessJti,
+          accessTokenExpiredAt: new Date(accessTokenExpiredAt)
         }
-      });
+      );
 
       const payload = {
         user: userDto
@@ -245,18 +212,7 @@ export class AuthService implements IAuthService {
 
   async validateUserAccessJti(userId: string, jti: string): Promise<UserDto> {
     try {
-      const user = await this.prisma.user.findUnique({
-        where: {
-          id: userId
-        },
-        include: {
-          tokens: {
-            where: {
-              accessToken: jti
-            }
-          }
-        }
-      });
+      const user = await this.userDao.getUserByAccessJti(userId, jti);
 
       if (!user) {
         throw new UserNotFound();
@@ -279,18 +235,7 @@ export class AuthService implements IAuthService {
 
   async validateUserRefreshJti(userId: string, jti: string): Promise<UserDto> {
     try {
-      const user = await this.prisma.user.findUnique({
-        where: {
-          id: userId
-        },
-        include: {
-          tokens: {
-            where: {
-              refreshToken: jti
-            }
-          }
-        }
-      });
+      const user = await this.userDao.getUserByRefreshJti(userId, jti);
 
       if (!user) {
         throw new UserNotFound();

@@ -8,15 +8,18 @@ import {
 import { IEventPricesService } from './event-prices-service.interface';
 import { EventPriceErrorFactory, EventPriceNotFound } from '../errors';
 import {
-  IPrismaApiService,
-  prismaApiServiceToken
-} from 'src/app/modules/prisma';
+  IDaoFactory,
+  daoFactoryToken
+} from 'src/app/modules/dao/dao-factory/dao-factory.interface';
+import { IEventPriceDao } from 'src/app/modules/dao/event-price-dao/event-price-dao.interface';
 
 @Injectable()
 export class EventPricesService implements IEventPricesService {
-  constructor(
-    @Inject(prismaApiServiceToken) private readonly prisma: IPrismaApiService
-  ) {}
+  private eventPriceDao: IEventPriceDao;
+
+  constructor(@Inject(daoFactoryToken) daoFactory: IDaoFactory) {
+    this.eventPriceDao = daoFactory.getEventPriceDao();
+  }
 
   async create(
     orgId: string,
@@ -24,25 +27,13 @@ export class EventPricesService implements IEventPricesService {
     createEventPriceDto: CreateEventPriceDto
   ): Promise<EventPriceDto> {
     try {
-      const event = await this.prisma.event.update({
-        where: {
-          id: eventId,
-          organization: {
-            id: orgId
-          }
-        },
-        data: {
-          prices: {
-            push: {
-              price: createEventPriceDto.price,
-              currency: createEventPriceDto.currency,
-              maxLimit: createEventPriceDto.maxLimit
-            }
-          }
-        }
-      });
+      const eventPrice = await this.eventPriceDao.create(
+        orgId,
+        eventId,
+        createEventPriceDto
+      );
 
-      return EventPriceDtoFactory.create(event.prices.pop());
+      return EventPriceDtoFactory.create(eventPrice);
     } catch (err: any) {
       throw EventPriceErrorFactory.create(
         err,
@@ -53,13 +44,9 @@ export class EventPricesService implements IEventPricesService {
 
   async findAll(eventId: string): Promise<EventPriceDto[]> {
     try {
-      const event = await this.prisma.event.findUnique({
-        where: {
-          id: eventId
-        }
-      });
+      const prices = await this.eventPriceDao.findAll(eventId);
 
-      return event.prices.map(EventPriceDtoFactory.create);
+      return prices.map(EventPriceDtoFactory.create);
     } catch (err: any) {
       throw EventPriceErrorFactory.create(
         err,
@@ -70,13 +57,7 @@ export class EventPricesService implements IEventPricesService {
 
   async findOne(eventId: string, priceId: string): Promise<EventPriceDto> {
     try {
-      const event = await this.prisma.event.findUnique({
-        where: {
-          id: eventId
-        }
-      });
-
-      const price = event.prices.find((p) => p.id === priceId);
+      const price = await this.eventPriceDao.findOne(eventId, priceId);
 
       if (!price) {
         throw new EventPriceNotFound();
@@ -95,30 +76,12 @@ export class EventPricesService implements IEventPricesService {
     updateEventPriceDto: UpdateEventPriceDto
   ): Promise<EventPriceDto> {
     try {
-      const event = await this.prisma.event.update({
-        where: {
-          id: eventId,
-          organization: {
-            id: orgId
-          }
-        },
-        data: {
-          prices: {
-            updateMany: {
-              where: {
-                id: priceId
-              },
-              data: {
-                price: updateEventPriceDto.price,
-                currency: updateEventPriceDto.currency,
-                maxLimit: updateEventPriceDto.maxLimit
-              }
-            }
-          }
-        }
-      });
-
-      const price = event.prices.find((p) => p.id === priceId);
+      const price = await this.eventPriceDao.update(
+        orgId,
+        eventId,
+        priceId,
+        updateEventPriceDto
+      );
 
       if (!price) {
         throw new EventPriceNotFound();
@@ -135,23 +98,7 @@ export class EventPricesService implements IEventPricesService {
 
   async remove(orgId: string, eventId: string, priceId: string): Promise<true> {
     try {
-      const event = await this.prisma.event.update({
-        where: {
-          id: eventId,
-          organization: {
-            id: orgId
-          }
-        },
-        data: {
-          prices: {
-            deleteMany: {
-              where: {
-                id: priceId
-              }
-            }
-          }
-        }
-      });
+      const price = await this.eventPriceDao.remove(orgId, eventId, priceId);
 
       return true;
     } catch (err: any) {

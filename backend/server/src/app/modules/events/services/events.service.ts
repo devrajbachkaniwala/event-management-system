@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { IPrismaApiService, prismaApiServiceToken } from '../../prisma';
 import { EventErrorFactory, EventNotFound } from '../errors';
 import {
   CreateEventDto,
@@ -15,13 +14,22 @@ import {
   EventTimingDtoFactory
 } from '../modules';
 import { ConfigService } from '@nestjs/config';
+import {
+  IDaoFactory,
+  daoFactoryToken
+} from '../../dao/dao-factory/dao-factory.interface';
+import { IEventDao } from '../../dao/event-dao/event-dao.interface';
 
 @Injectable()
 export class EventsService implements IEventsService {
+  private eventDao: IEventDao;
+
   constructor(
-    @Inject(prismaApiServiceToken) private readonly prisma: IPrismaApiService,
+    @Inject(daoFactoryToken) daoFactory: IDaoFactory,
     private readonly configService: ConfigService
-  ) {}
+  ) {
+    this.eventDao = daoFactory.getEventDao();
+  }
 
   async create(
     orgId: string,
@@ -29,55 +37,26 @@ export class EventsService implements IEventsService {
     eventPhotoFiles: Array<Express.Multer.File>
   ): Promise<EventDto> {
     try {
-      const event = await this.prisma.event.create({
-        data: {
-          name: createEventDto.name,
-          description: createEventDto.description,
-          city: createEventDto.city,
-          state: createEventDto.state,
-          country: createEventDto.country,
-          venue: createEventDto.venue,
-          category: createEventDto.category,
+      const newEvent = await this.eventDao.create(orgId, createEventDto);
 
-          timings: createEventDto.timings.map((t) => ({
-            date: t.date,
-            startTime: t.startTime,
-            endTime: t.endTime
-          })),
+      const photoUrls: string[] = eventPhotoFiles.map((p) =>
+        this.generatePhotoUrl(newEvent.id, p.filename)
+      );
 
-          prices: createEventDto.prices.map((p) => ({
-            price: p.price,
-            currency: p.currency,
-            maxLimit: p.maxLimit
-          })),
+      let updatedEventWithPhotos: EventDto;
 
-          organization: {
-            connect: {
-              id: orgId
-            }
-          }
-        }
-      });
+      try {
+        updatedEventWithPhotos = await this.eventDao.update(
+          orgId,
+          newEvent.id,
+          { photoUrls }
+        );
+      } catch (err: any) {
+        await this.remove(newEvent.orgId, newEvent.id);
+        throw err;
+      }
 
-      const photoUrls = eventPhotoFiles.map((p) => ({
-        photoUrl: this.generatePhotoUrl(event.id, p.filename)
-      }));
-
-      const updateEvent = await this.prisma.event.update({
-        where: {
-          id: event.id,
-          organization: {
-            id: orgId
-          }
-        },
-        data: {
-          photos: {
-            push: photoUrls
-          }
-        }
-      });
-
-      const data: Event = { ...updateEvent };
+      const data: Event = { ...updatedEventWithPhotos };
 
       data.timings = data.timings.map(EventTimingDtoFactory.create);
       data.prices = data.prices.map(EventPriceDtoFactory.create);
@@ -92,24 +71,18 @@ export class EventsService implements IEventsService {
 
   async findAll(): Promise<EventDto[]> {
     try {
-      const events = await this.prisma.event.findMany();
+      const events = await this.eventDao.findAll();
 
       return events.map(EventDtoFactory.create);
     } catch (err: any) {
+      console.log(err);
       throw EventErrorFactory.create(err, 'Failed to get all events');
     }
   }
 
   async findOne(eventId: string): Promise<EventDto> {
     try {
-      const event = await this.prisma.event.findUnique({
-        where: {
-          id: eventId
-        },
-        include: {
-          organization: true
-        }
-      });
+      const event = await this.eventDao.findOne(eventId);
 
       if (!event) {
         throw new EventNotFound();
@@ -117,6 +90,7 @@ export class EventsService implements IEventsService {
 
       return EventDtoFactory.create(event);
     } catch (err: any) {
+      console.log(err);
       throw EventErrorFactory.create(err, 'Failed to get an event');
     }
   }
@@ -125,58 +99,19 @@ export class EventsService implements IEventsService {
     orgId: string,
     eventId: string,
     updateEventDto: UpdateEventDto,
-    eventPhotoFiles: Array<Express.Multer.File>
+    eventPhotoFiles?: Array<Express.Multer.File>
   ) {
     try {
-      const event = await this.prisma.event.update({
-        where: {
-          id: eventId,
-          organization: {
-            id: orgId
-          }
-        },
-        data: {
-          name: updateEventDto.name,
-          description: updateEventDto.description,
-          city: updateEventDto.city,
-          state: updateEventDto.state,
-          country: updateEventDto.country,
-          venue: updateEventDto.venue,
-          category: updateEventDto.category,
+      const photoUrls: string[] = eventPhotoFiles?.map((p) =>
+        this.generatePhotoUrl(eventId, p.filename)
+      );
 
-          timings: updateEventDto.timings.map((t) => ({
-            date: t.date,
-            startTime: t.startTime,
-            endTime: t.endTime
-          })),
-
-          prices: updateEventDto.prices.map((p) => ({
-            price: p.price,
-            currency: p.currency,
-            maxLimit: p.maxLimit
-          }))
-        }
+      const event = await this.eventDao.update(orgId, eventId, {
+        ...updateEventDto,
+        photoUrls
       });
 
-      const photoUrls = eventPhotoFiles.map((p) => ({
-        photoUrl: this.generatePhotoUrl(event.id, p.filename)
-      }));
-
-      const updateEvent = await this.prisma.event.update({
-        where: {
-          id: event.id,
-          organization: {
-            id: orgId
-          }
-        },
-        data: {
-          photos: {
-            push: photoUrls
-          }
-        }
-      });
-
-      const data: Event = { ...updateEvent };
+      const data: Event = { ...event };
 
       data.timings = data.timings.map(EventTimingDtoFactory.create);
       data.prices = data.prices.map(EventPriceDtoFactory.create);
@@ -184,22 +119,16 @@ export class EventsService implements IEventsService {
 
       return EventDtoFactory.create(data);
     } catch (err: any) {
+      console.log(err);
       throw EventErrorFactory.create(err, 'Failed to update an event');
     }
   }
 
-  async remove(orgId: string, eventId: string): Promise<true> {
+  async remove(orgId: string, eventId: string): Promise<boolean> {
     try {
-      const event = await this.prisma.event.delete({
-        where: {
-          id: eventId,
-          organization: {
-            id: orgId
-          }
-        }
-      });
+      const isDeleted = await this.eventDao.remove(orgId, eventId);
 
-      return true;
+      return isDeleted;
     } catch (err: any) {
       console.log(err);
       throw EventErrorFactory.create(err, 'Failed to delete an event');

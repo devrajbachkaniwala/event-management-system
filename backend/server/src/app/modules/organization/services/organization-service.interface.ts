@@ -13,15 +13,16 @@ export interface IOrganizationService {
     orgPhotoFile: Express.Multer.File
   ): Promise<OrganizationDto>;
 
-  findOne(userId: string): Promise<OrganizationDto>;
+  findOne(userId: string, orgId: string): Promise<OrganizationDto>;
 
   getOrgEvents(orgId: string): Promise<EventDto[]>;
 
   update(
     userId: string,
+    orgId: string,
     updateOrganizationDto: UpdateOrganizationDto,
     orgPhotoFile: Express.Multer.File
   ): Promise<OrganizationDto>;
 
-  remove(userId: string): Promise<true>;
+  remove(userId: string, orgId: string): Promise<true>;
 }

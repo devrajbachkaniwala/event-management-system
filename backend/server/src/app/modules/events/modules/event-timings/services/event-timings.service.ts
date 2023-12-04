@@ -6,17 +6,20 @@ import {
   EventTimingDtoFactory,
   UpdateEventTimingDto
 } from '../dto';
-import {
-  IPrismaApiService,
-  prismaApiServiceToken
-} from 'src/app/modules/prisma';
 import { EventTimingErrorFactory, EventTimingNotFound } from '../errors';
+import {
+  IDaoFactory,
+  daoFactoryToken
+} from 'src/app/modules/dao/dao-factory/dao-factory.interface';
+import { IEventTimingDao } from 'src/app/modules/dao/event-timing-dao/event-timing-dao.interface';
 
 @Injectable()
 export class EventTimingsService implements IEventTimingsService {
-  constructor(
-    @Inject(prismaApiServiceToken) private readonly prisma: IPrismaApiService
-  ) {}
+  private eventTimingDao: IEventTimingDao;
+
+  constructor(@Inject(daoFactoryToken) daoFactory: IDaoFactory) {
+    this.eventTimingDao = daoFactory.getEventTimingDao();
+  }
 
   async create(
     orgId: string,
@@ -24,25 +27,13 @@ export class EventTimingsService implements IEventTimingsService {
     createEventTimingDto: CreateEventTimingDto
   ): Promise<EventTimingDto> {
     try {
-      const event = await this.prisma.event.update({
-        where: {
-          id: eventId,
-          organization: {
-            id: orgId
-          }
-        },
-        data: {
-          timings: {
-            push: {
-              date: createEventTimingDto.date,
-              startTime: createEventTimingDto.startTime,
-              endTime: createEventTimingDto.endTime
-            }
-          }
-        }
-      });
+      const timing = await this.eventTimingDao.create(
+        orgId,
+        eventId,
+        createEventTimingDto
+      );
 
-      return EventTimingDtoFactory.create(event.timings.pop());
+      return EventTimingDtoFactory.create(timing);
     } catch (err: any) {
       throw EventTimingErrorFactory.create(
         err,
@@ -53,13 +44,9 @@ export class EventTimingsService implements IEventTimingsService {
 
   async findAll(eventId: string): Promise<EventTimingDto[]> {
     try {
-      const event = await this.prisma.event.findUnique({
-        where: {
-          id: eventId
-        }
-      });
+      const timings = await this.eventTimingDao.findAll(eventId);
 
-      return event.timings.map(EventTimingDtoFactory.create);
+      return timings.map(EventTimingDtoFactory.create);
     } catch (err: any) {
       throw EventTimingErrorFactory.create(
         err,
@@ -70,13 +57,7 @@ export class EventTimingsService implements IEventTimingsService {
 
   async findOne(eventId: string, timingId: string): Promise<EventTimingDto> {
     try {
-      const event = await this.prisma.event.findUnique({
-        where: {
-          id: eventId
-        }
-      });
-
-      const eventTiming = event.timings.find((t) => t.id === timingId);
+      const eventTiming = await this.eventTimingDao.findOne(eventId, timingId);
 
       if (!eventTiming) {
         throw new EventTimingNotFound();
@@ -98,30 +79,12 @@ export class EventTimingsService implements IEventTimingsService {
     updateEventTimingDto: UpdateEventTimingDto
   ): Promise<EventTimingDto> {
     try {
-      const event = await this.prisma.event.update({
-        where: {
-          id: eventId,
-          organization: {
-            id: orgId
-          }
-        },
-        data: {
-          timings: {
-            updateMany: {
-              where: {
-                id: timingId
-              },
-              data: {
-                date: updateEventTimingDto.date,
-                startTime: updateEventTimingDto.startTime,
-                endTime: updateEventTimingDto.endTime
-              }
-            }
-          }
-        }
-      });
-
-      const eventTiming = event.timings.find((t) => t.id === timingId);
+      const eventTiming = await this.eventTimingDao.update(
+        orgId,
+        eventId,
+        timingId,
+        updateEventTimingDto
+      );
 
       if (!eventTiming) {
         throw new EventTimingNotFound();
@@ -142,23 +105,7 @@ export class EventTimingsService implements IEventTimingsService {
     timingId: string
   ): Promise<boolean> {
     try {
-      const event = await this.prisma.event.update({
-        where: {
-          id: eventId,
-          organization: {
-            id: orgId
-          }
-        },
-        data: {
-          timings: {
-            deleteMany: {
-              where: {
-                id: timingId
-              }
-            }
-          }
-        }
-      });
+      const timing = await this.eventTimingDao.remove(orgId, eventId, timingId);
 
       return true;
     } catch (err: any) {
