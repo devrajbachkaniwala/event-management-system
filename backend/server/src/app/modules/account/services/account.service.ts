@@ -32,12 +32,14 @@ export class AccountService implements IAccountService {
         : undefined;
 
       const user = await this.userDao.update(userId, {
-        ...updateUserProfile,
+        fullName: updateUserProfile.fullName,
+        username: updateUserProfile.username,
         photoUrl
       });
 
       return UserDtoFactory.create(user);
     } catch (err: any) {
+      console.log(err);
       throw AccountErrorFactory.create(err, 'Failed to update user profile');
     }
   }
