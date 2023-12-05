@@ -1,7 +1,7 @@
 'use client';
 import { Loading } from '@/components/Loading';
 import { fetchProfile } from '@/redux/features/authSlice';
-import { useAppDispatch } from '@/redux/store';
+import { RootState, useAppDispatch } from '@/redux/store';
 import { AuthService } from '@/services/auth-service';
 import { LocalStorageService } from '@/services/local-storage-service';
 import { getProfile } from '@/utils/getProfile';
@@ -9,8 +9,11 @@ import { login } from '@/utils/login';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
 
 function LoginPage() {
+  const user = useSelector((state: RootState) => state.auth.user);
+
   const [isLoading, setIsLoading] = useState(true);
   const [errMsg, setErrMsg] = useState<string>('');
   const router = useRouter();
@@ -18,14 +21,22 @@ function LoginPage() {
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    getProfile().then((user) => {
-      if (user) {
-        router.replace('/');
-      } else {
-        setIsLoading(false);
-      }
-    });
-  }, [router]);
+    if (user) {
+      router.replace('/');
+    } else {
+      setIsLoading(false);
+    }
+  }, [user, router]);
+
+  // useEffect(() => {
+  //   getProfile().then((user) => {
+  //     if (user) {
+  //       router.replace('/');
+  //     } else {
+  //       setIsLoading(false);
+  //     }
+  //   });
+  // }, [router]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();

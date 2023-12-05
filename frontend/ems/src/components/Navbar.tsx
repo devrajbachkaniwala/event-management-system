@@ -2,6 +2,7 @@
 
 import { fetchProfile, resetAuthState } from '@/redux/features/authSlice';
 import { RootState, useAppDispatch } from '@/redux/store';
+import { TokenService } from '@/services/token-service';
 import { logout } from '@/utils/logout';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -13,16 +14,26 @@ export function Navbar() {
   const user = useSelector((state: RootState) => state.auth.user);
   const dispatch = useAppDispatch();
 
+  const router = useRouter();
+
   useEffect(() => {
     dispatch(fetchProfile());
   }, [dispatch]);
 
   const handleLogout = async () => {
     try {
-      const res = await logout();
       dispatch(resetAuthState());
+
+      const res = await logout();
+
+      TokenService.removeAllTokens();
+
+      if (res) {
+        router.push('/login');
+      }
     } catch (err: any) {
       console.log(err);
+      TokenService.removeAllTokens();
     }
   };
 
