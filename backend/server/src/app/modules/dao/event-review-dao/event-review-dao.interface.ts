@@ -1,5 +1,7 @@
-import { Review } from '@prisma/client';
+import { Review, User } from '@prisma/client';
 import { CreateEventReviewDto } from '../../events';
+
+export type TReviewWithUser = Review & { user?: User };
 
 export const eventReviewDaoToken = Symbol('eventReviewDaoToken');
 export interface IEventReviewDao {
@@ -7,11 +9,11 @@ export interface IEventReviewDao {
     userId: string,
     eventId: string,
     createEventReviewDto: CreateEventReviewDto
-  ): Promise<Review>;
+  ): Promise<TReviewWithUser>;
 
-  findAll(eventId: string): Promise<Review[]>;
+  findAll(eventId: string): Promise<TReviewWithUser[]>;
 
-  findOne(eventId: string, reviewId: string): Promise<Review>;
+  findOne(eventId: string, reviewId: string): Promise<TReviewWithUser>;
 
   // update(arg0: number, updateEventReviewDto: UpdateEventReviewDto): unknown;
 

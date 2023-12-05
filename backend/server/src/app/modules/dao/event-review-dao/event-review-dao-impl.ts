@@ -1,7 +1,7 @@
 import { Inject } from '@nestjs/common';
 import { CreateEventReviewDto } from '../../events';
 import { DaoError } from '../errors/dao.error';
-import { IEventReviewDao } from './event-review-dao.interface';
+import { IEventReviewDao, TReviewWithUser } from './event-review-dao.interface';
 import { IPrismaApiService, prismaApiServiceToken } from '../../prisma';
 import { Review } from '@prisma/client';
 
@@ -14,7 +14,7 @@ export class EventReviewDaoImpl implements IEventReviewDao {
     userId: string,
     eventId: string,
     createEventReviewDto: CreateEventReviewDto
-  ): Promise<Review> {
+  ): Promise<TReviewWithUser> {
     try {
       const review = await this.prisma.review.create({
         data: {
@@ -32,6 +32,9 @@ export class EventReviewDaoImpl implements IEventReviewDao {
               id: userId
             }
           }
+        },
+        include: {
+          user: true
         }
       });
 
@@ -41,13 +44,16 @@ export class EventReviewDaoImpl implements IEventReviewDao {
     }
   }
 
-  async findAll(eventId: string): Promise<Review[]> {
+  async findAll(eventId: string): Promise<TReviewWithUser[]> {
     try {
       const reviews = await this.prisma.review.findMany({
         where: {
           event: {
             id: eventId
           }
+        },
+        include: {
+          user: true
         }
       });
 
@@ -57,7 +63,7 @@ export class EventReviewDaoImpl implements IEventReviewDao {
     }
   }
 
-  async findOne(eventId: string, reviewId: string): Promise<Review> {
+  async findOne(eventId: string, reviewId: string): Promise<TReviewWithUser> {
     try {
       const review = await this.prisma.review.findUnique({
         where: {
@@ -65,6 +71,9 @@ export class EventReviewDaoImpl implements IEventReviewDao {
           event: {
             id: eventId
           }
+        },
+        include: {
+          user: true
         }
       });
 

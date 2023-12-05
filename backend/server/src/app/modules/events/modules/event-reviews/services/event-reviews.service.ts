@@ -10,7 +10,10 @@ import {
   IDaoFactory,
   daoFactoryToken
 } from 'src/app/modules/dao/dao-factory/dao-factory.interface';
-import { IEventReviewDao } from 'src/app/modules/dao/event-review-dao/event-review-dao.interface';
+import {
+  IEventReviewDao,
+  TReviewWithUser
+} from 'src/app/modules/dao/event-review-dao/event-review-dao.interface';
 
 @Injectable()
 export class EventReviewsService implements IEventReviewsService {
