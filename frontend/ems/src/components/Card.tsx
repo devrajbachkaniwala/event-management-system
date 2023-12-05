@@ -1,5 +1,4 @@
 import Image from 'next/image';
-import Link from 'next/link';
 
 type TCardProps = {
   id: string;
@@ -8,6 +7,12 @@ type TCardProps = {
   tags: string;
   photoUrl: string;
   className?: string;
+  deleteEvent?: (eventId: string) => Promise<
+    | {
+        message: string;
+      }
+    | undefined
+  >;
 };
 
 function Card({
@@ -16,7 +21,8 @@ function Card({
   description,
   tags,
   photoUrl,
-  className
+  className,
+  deleteEvent
 }: TCardProps) {
   return (
     <div className={`card w-96 bg-base-100 shadow-xl ${className}`}>
@@ -32,12 +38,28 @@ function Card({
       <div className='card-body'>
         <h2 className='card-title'>{title}</h2>
         <p>{description}</p>
-        <div className='card-actions justify-end'>
-          {tags.split(',').map((tag) => (
-            <div className='badge badge-outline' key={tag}>
-              {tag}
+        <div className='flex justify-between items-center'>
+          <div className='card-actions justify-start flex-1'>
+            {tags.split(',').map((tag) => (
+              <div className='badge badge-outline' key={tag}>
+                {tag}
+              </div>
+            ))}
+          </div>
+          {deleteEvent ? (
+            <div>
+              <button
+                type='button'
+                className='btn btn-outline btn-error btn-sm'
+                onClick={(e) => {
+                  e.preventDefault();
+                  deleteEvent(id);
+                }}
+              >
+                Delete
+              </button>
             </div>
-          ))}
+          ) : null}
         </div>
       </div>
     </div>

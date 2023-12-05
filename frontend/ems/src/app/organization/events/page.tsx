@@ -3,6 +3,7 @@
 import { Card } from '@/components/Card';
 import { Loading } from '@/components/Loading';
 import { EventDto } from '@/dto/event.dto';
+import { deleteEvent } from '@/utils/deleteEvent';
 import { getOrgEvents } from '@/utils/getOrgEvents';
 import { getProfile } from '@/utils/getProfile';
 import Link from 'next/link';
@@ -36,6 +37,19 @@ function OrgEventsPage() {
       .finally(() => setIsEventLoading(false));
   }, [router]);
 
+  const handleDeleteEvent = async (eventId: string) => {
+    const res = await deleteEvent(eventId);
+
+    if (res) {
+      setEvents((prev) => {
+        if (prev) {
+          return prev.filter((p) => p.id !== eventId);
+        }
+      });
+    }
+    return res;
+  };
+
   if (isLoading || isEventLoading) {
     return <Loading />;
   }
@@ -56,6 +70,7 @@ function OrgEventsPage() {
                   photoUrl={event.photos[0]?.photoUrl}
                   tags={event.category}
                   className='card-side w-full mt-6'
+                  deleteEvent={handleDeleteEvent}
                 />
               </Link>
             ))

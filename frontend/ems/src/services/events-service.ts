@@ -3,6 +3,7 @@ import { FetchService } from './fetch-service';
 import { EnvService } from './env-service';
 import { CreateEventDto } from '@/dto/create-event.dto';
 import { UpdateEventDto } from '@/dto/update-event.dto';
+import { retryFunction } from '@/utils/retryFunction';
 
 export class EventsService {
   static async getAll(): Promise<Array<EventDto>> {
@@ -128,6 +129,26 @@ export class EventsService {
     }
 
     return resData.data as EventDto;
+  }
+
+  static async delete(eventId: string): Promise<{ message: string }> {
+    const url = `${EnvService.getServerUrl()}/v1/events/${eventId}`;
+    const res = await FetchService.delete(url, {
+      authTokenType: 'accessToken'
+    });
+
+    const resData = await res.json();
+
+    if (!res.ok && res.status !== 401) {
+      throw new EventsServiceError(resData.message);
+    } else if (res.status === 401) {
+      const isCallable = await retryFunction(res);
+      if (isCallable) {
+        return await this.delete(eventId);
+      }
+    }
+
+    return resData.data as { message: string };
   }
 }
 

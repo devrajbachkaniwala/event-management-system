@@ -1,6 +1,7 @@
 'use client';
 
 import { Loading } from '@/components/Loading';
+import { Review } from '@/components/Review';
 import { Toast } from '@/components/Toast';
 import { CreateBookingDto } from '@/dto/create-booking.dto';
 import { EventDto } from '@/dto/event.dto';
@@ -305,6 +306,10 @@ function EventPage({ params }: TEventProps) {
       </div>
 
       <div className='divider'></div>
+
+      <div className='my-6'>
+        <Review eventId={params.id} />
+      </div>
 
       <dialog id='my_modal_2' className='modal'>
         <div className='modal-box'>

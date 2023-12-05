@@ -4,8 +4,10 @@ import { Loading } from '@/components/Loading';
 import { UserDto } from '@/dto/user.dto';
 import { addTeamMember } from '@/utils/addTeamMember';
 import { getOrgTeamMembers } from '@/utils/getOrgTeamMembers';
+import { getProfile } from '@/utils/getProfile';
 import { removeTeamMember } from '@/utils/removeTeamMember';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { ChangeEvent, FormEvent, useEffect, useState } from 'react';
 
 function OrganizationTeamMembers() {
@@ -13,6 +15,20 @@ function OrganizationTeamMembers() {
   const [emailInput, setEmailInput] = useState('');
   const [emailInputErrMsg, setEmailInputErrMsg] = useState('');
   const [teamMembers, setTeamMembers] = useState<UserDto[]>([]);
+
+  const router = useRouter();
+
+  useEffect(() => {
+    getProfile().then((user) => {
+      if (!user) {
+        router.replace('/login');
+      } else if (!user?.orgId) {
+        router.replace('/organization/create');
+      } else {
+        setIsLoading(false);
+      }
+    });
+  }, [router]);
 
   useEffect(() => {
     setEmailInputErrMsg('');
