@@ -51,7 +51,9 @@ export class EventDaoImpl implements IEventDao {
 
   async findAll(): Promise<Event[]> {
     try {
-      const events = await this.prisma.event.findMany();
+      const events = await this.prisma.event.findMany({
+        orderBy: { createdAt: 'desc' }
+      });
       return events;
     } catch (err: any) {
       throw new DaoError(err.message);
