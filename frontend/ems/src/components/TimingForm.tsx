@@ -27,7 +27,7 @@ function TimingForm({
     <div className='my-4'>
       <div className='form-control w-full max-w-lg'>
         <div className='flex justify-between mb-2'>
-          <h2>Timing Plan 1</h2>
+          <h2>Timing Plan {index + 1}</h2>
           {index > 0 ? (
             <button
               type='button'

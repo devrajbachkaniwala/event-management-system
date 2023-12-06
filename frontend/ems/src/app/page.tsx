@@ -61,9 +61,16 @@ export default function HomePage() {
           )}
         </div>
         <div className='flex justify-center my-8'>
-          <Link href={`/events`} className='btn btn-wide btn-info btn-outline'>
-            View more
-          </Link>
+          {events?.length ? (
+            <Link
+              href={`/events`}
+              className='btn btn-wide btn-info btn-outline'
+            >
+              View more
+            </Link>
+          ) : (
+            <div className='text-center'>No events</div>
+          )}
         </div>
       </div>
     </main>

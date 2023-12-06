@@ -37,7 +37,7 @@ function EventBookingCard({
       </figure>
       <div className='card-body'>
         <h2 className='card-title'>{event.name}</h2>
-        <p>{event.description}</p>
+        <p>{`${event.description.slice(0, 200)}...`}</p>
         <div className=''>
           <span className='font-bold'>Location: </span>
           <span>{`${event.city}, ${event.state}, ${event.country}`}</span>
@@ -71,7 +71,7 @@ function EventBookingCard({
         <div className='card-actions justify-between align-middle'>
           <div className='self-center flex gap-2'>
             {event.category.split(',').map((tag) => (
-              <div className='badge badge-outline self-center' key={tag}>
+              <div className='badge badge-outline self-center ml-1' key={tag}>
                 {tag}
               </div>
             ))}

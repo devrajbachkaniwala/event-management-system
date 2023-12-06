@@ -37,11 +37,11 @@ function Card({
       </figure>
       <div className='card-body'>
         <h2 className='card-title'>{title}</h2>
-        <p>{description}</p>
+        <p>{`${description.slice(0, 200)}...`}</p>
         <div className='flex justify-between items-center'>
           <div className='card-actions justify-start flex-1'>
             {tags.split(',').map((tag) => (
-              <div className='badge badge-outline' key={tag}>
+              <div className='badge badge-outline ml-1' key={tag}>
                 {tag}
               </div>
             ))}
