@@ -31,14 +31,16 @@ type TAuthSliceState = {
   user?: UserDto;
 };
 
-const authSliceInitialState: TAuthSliceState = {};
+const authSliceInitialState: TAuthSliceState = {
+  user: undefined
+};
 
 const authSlice = createSlice({
   name: 'auth',
   initialState: authSliceInitialState,
   reducers: {
     resetAuthState: (state, action: Action<any>) => {
-      state = authSliceInitialState;
+      state.user = undefined;
     }
   },
   extraReducers: (builder) => {

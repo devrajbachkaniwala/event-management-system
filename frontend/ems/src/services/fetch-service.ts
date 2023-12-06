@@ -110,17 +110,17 @@ export class FetchService {
       bodyData = JSON.stringify(bodyData);
     }
 
-    return enhancedRevalidateFetch(url, {
-      method: 'POST',
-      headers: headerOpt,
-      body: bodyData
-    });
-
-    // return fetch(url, {
+    // return enhancedRevalidateFetch(url, {
     //   method: 'POST',
     //   headers: headerOpt,
     //   body: bodyData
     // });
+
+    return fetch(url, {
+      method: 'POST',
+      headers: headerOpt,
+      body: bodyData
+    });
   }
 
   static patch(url: string, options: TPatchOpt) {

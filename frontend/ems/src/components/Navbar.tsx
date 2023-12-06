@@ -4,6 +4,7 @@ import { fetchProfile, resetAuthState } from '@/redux/features/authSlice';
 import { RootState, useAppDispatch } from '@/redux/store';
 import { TokenService } from '@/services/token-service';
 import { logout } from '@/utils/logout';
+import { wait } from '@/utils/wait';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -22,9 +23,10 @@ export function Navbar() {
 
   const handleLogout = async () => {
     try {
-      dispatch(resetAuthState());
-
       const res = await logout();
+
+      dispatch(resetAuthState());
+      await wait(0.5);
 
       // TokenService.removeAllTokens();
 
@@ -111,9 +113,9 @@ export function Navbar() {
                 <a href='/my-bookings'>My bookings</a>
               </li>
               <li>
-                <a href='/login' onClick={handleLogout}>
+                <button type='button' onClick={handleLogout}>
                   Logout
-                </a>
+                </button>
               </li>
             </ul>
           </div>
