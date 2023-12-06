@@ -10,7 +10,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { ChangeEvent, FormEvent, useEffect, useState } from 'react';
 
-function OrganizationTeamMembers() {
+function OrganizationTeamMembersPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [emailInput, setEmailInput] = useState('');
   const [emailInputErrMsg, setEmailInputErrMsg] = useState('');
@@ -164,4 +164,4 @@ function OrganizationTeamMembers() {
   );
 }
 
-export default OrganizationTeamMembers;
+export default OrganizationTeamMembersPage;

@@ -15,6 +15,7 @@ function EventsPage() {
   useEffect(() => {
     getAllEvents()
       .then((events) => {
+        console.log(events);
         setEvents(events);
         setFilteredEvents(events);
       })
@@ -24,12 +25,14 @@ function EventsPage() {
   const handleSearch = (e: ChangeEvent<HTMLInputElement>) => {
     setFilteredEvents(
       (prevFilteredEvents) =>
-        events?.filter(
-          (event) =>
-            event.name.includes(e.target.value) ||
-            event.description.includes(e.target.value) ||
-            event.category.includes(e.target.value)
-        )
+        events?.filter((event) => {
+          const value = e.target.value.toLowerCase();
+          return (
+            event.name.toLowerCase().includes(value) ||
+            event.description.toLowerCase().includes(value) ||
+            event.category.toLowerCase().includes(value)
+          );
+        })
     );
   };
 

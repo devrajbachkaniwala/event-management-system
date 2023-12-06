@@ -24,7 +24,7 @@ export default function RootLayout({
       <body className={`${inter.className} h-screen`}>
         <StoreProvider>
           <Navbar />
-          {children}
+          <div className='min-h-[80%]'>{children}</div>
           <Footer />
         </StoreProvider>
       </body>

@@ -26,9 +26,10 @@ export function Navbar() {
 
       const res = await logout();
 
-      TokenService.removeAllTokens();
+      // TokenService.removeAllTokens();
 
       if (res) {
+        console.log(res);
         router.push('/login');
       }
     } catch (err: any) {
@@ -38,7 +39,7 @@ export function Navbar() {
   };
 
   return (
-    <div className='navbar bg-base-100'>
+    <div className='navbar bg-base-100 min-h-[10%]'>
       <div className='flex-1'>
         <Link href={'/'} className='btn btn-ghost text-xl'>
           Event Management System
@@ -76,7 +77,7 @@ export function Navbar() {
                   </Link>
                 </li>
                 <li>
-                  <a href='/organization/events'>My events</a>
+                  <Link href='/organization/events'>My events</Link>
                 </li>
               </ul>
             </div>
@@ -120,8 +121,7 @@ export function Navbar() {
       ) : (
         <div>
           <Link href={'/login'} className='btn btn-outline mr-2 btn-success'>
-            {' '}
-            Login{' '}
+            Login
           </Link>
         </div>
       )}

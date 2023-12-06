@@ -221,7 +221,7 @@ function EventPage({ params }: TEventProps) {
 
             <div className='form-control my-4'>
               <label className='label'>
-                <span className='label-text'>Select quantity</span>
+                <span className='label-text'>Select number of tickets</span>
               </label>
               <select
                 name='qty'
@@ -269,7 +269,10 @@ function EventPage({ params }: TEventProps) {
         <div className='my-4'>
           <h2 className='text-lg font-bold'>Category</h2>
           {event?.category.split(',').map((category) => (
-            <div key={category} className='badge badge-primary badge-outline'>
+            <div
+              key={category}
+              className='badge badge-primary badge-outline mr-1'
+            >
               {category}
             </div>
           ))}

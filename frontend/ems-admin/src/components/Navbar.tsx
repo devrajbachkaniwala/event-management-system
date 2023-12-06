@@ -83,8 +83,7 @@ export function Navbar() {
       ) : (
         <div>
           <Link href={'/login'} className='btn btn-outline mr-2 btn-success'>
-            {' '}
-            Login{' '}
+            Login
           </Link>
         </div>
       )}

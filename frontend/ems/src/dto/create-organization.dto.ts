@@ -1,4 +1,11 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsNumberString,
+  IsString,
+  Length,
+  MinLength
+} from 'class-validator';
 
 export class CreateOrganizationDto {
   @IsNotEmpty()
@@ -11,7 +18,12 @@ export class CreateOrganizationDto {
   description: string;
 
   @IsNotEmpty()
-  @IsString()
+  @IsNumberString(undefined, {
+    message: 'contact no must be numeric'
+  })
+  @Length(10, 10, {
+    message: 'contact no must be 10 digits'
+  })
   contactNo: string;
 
   @IsNotEmpty()

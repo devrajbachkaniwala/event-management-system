@@ -64,12 +64,14 @@ export default function HomePage() {
   const handleSearch = (e: ChangeEvent<HTMLInputElement>) => {
     setfilteredUsers(
       (prevFilteredUsers) =>
-        users?.filter(
-          (user) =>
-            user.fullName.includes(e.target.value) ||
-            user.email.includes(e.target.value) ||
-            user.username.includes(e.target.value)
-        )
+        users?.filter((user) => {
+          const value = e.target.value.toLowerCase();
+          return (
+            user.fullName.toLowerCase().includes(value) ||
+            user.email.toLowerCase().includes(value) ||
+            user.username.toLowerCase().includes(value)
+          );
+        })
     );
   };
 
@@ -109,56 +111,60 @@ export default function HomePage() {
 
       {/* <h2 className='font-bold text-2xl text-center my-6'>Users</h2> */}
 
-      <div className='flex justify-center'>
-        <div className='overflow-x-auto w-3/4'>
-          <table className='table'>
-            {/* head */}
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Username</th>
-                <th>Email</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredUsers.map((user) => (
-                <tr key={user.id}>
-                  <td>
-                    <div className='flex items-center gap-3'>
-                      <div className='avatar'>
-                        <div className='mask mask-squircle bg-slate-500 w-12 h-12'>
-                          {user.userPhotoUrl ? (
-                            <Image
-                              src={user.userPhotoUrl}
-                              alt={'team member photo'}
-                              width={200}
-                              height={200}
-                            />
-                          ) : null}
+      {filteredUsers.length > 0 ? (
+        <div className='flex justify-center'>
+          <div className='overflow-x-auto w-3/4'>
+            <table className='table'>
+              {/* head */}
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Username</th>
+                  <th>Email</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredUsers.map((user) => (
+                  <tr key={user.id}>
+                    <td>
+                      <div className='flex items-center gap-3'>
+                        <div className='avatar'>
+                          <div className='mask mask-squircle bg-slate-500 w-12 h-12'>
+                            {user.userPhotoUrl ? (
+                              <Image
+                                src={user.userPhotoUrl}
+                                alt={'team member photo'}
+                                width={200}
+                                height={200}
+                              />
+                            ) : null}
+                          </div>
+                        </div>
+                        <div>
+                          <div className='font-bold'>{user.fullName}</div>
                         </div>
                       </div>
-                      <div>
-                        <div className='font-bold'>{user.fullName}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td>{user.username}</td>
-                  <td>{user.email}</td>
-                  <th>
-                    <Link
-                      href={`/users/${user.id}`}
-                      className='btn btn-outline btn-info btn-sm'
-                    >
-                      show more
-                    </Link>
-                  </th>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                    </td>
+                    <td>{user.username}</td>
+                    <td>{user.email}</td>
+                    <th>
+                      <Link
+                        href={`/users/${user.id}`}
+                        className='btn btn-outline btn-info btn-sm'
+                      >
+                        show more
+                      </Link>
+                    </th>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className='text-center'>No users found</div>
+      )}
     </div>
   );
 }

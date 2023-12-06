@@ -7,13 +7,13 @@ import { getAllEvents } from '@/utils/getAllEvents';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
-export default function Home() {
+export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [events, setEvents] = useState<EventDto[]>();
 
   useEffect(() => {
     getAllEvents()
-      .then((events) => setEvents(events))
+      .then((events) => setEvents(events?.slice(0, 6)))
       .finally(() => setIsLoading(false));
   }, []);
 

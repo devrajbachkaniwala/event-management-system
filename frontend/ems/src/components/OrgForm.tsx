@@ -2,6 +2,8 @@
 
 import { CreateOrganizationDto } from '@/dto/create-organization.dto';
 import { UpdateOrganizationDto } from '@/dto/update-organization.dto';
+import { fetchProfile } from '@/redux/features/authSlice';
+import { useAppDispatch } from '@/redux/store';
 import { FileValidatorService } from '@/services/file-validator-service';
 import { createOrg } from '@/utils/createOrg';
 import { editOrg } from '@/utils/editOrg';
@@ -32,6 +34,8 @@ function OrgForm({ isEditForm }: TOrgFormProps) {
   const [photoFile, setPhotoFile] = useState<File>();
   const [photoUrl, setPhotoUrl] = useState('');
   const [photoErrMsg, setPhotoErrMsg] = useState('');
+
+  const dispatch = useAppDispatch();
 
   const resolver = classValidatorResolver(CreateOrganizationDto);
 
@@ -103,6 +107,8 @@ function OrgForm({ isEditForm }: TOrgFormProps) {
 
     const org = await createOrg(createOrgDto, photoFile);
     console.log(org);
+
+    dispatch(fetchProfile());
 
     router.push('/organization/edit');
   };
@@ -262,7 +268,7 @@ function OrgForm({ isEditForm }: TOrgFormProps) {
                   </label>
                   <input
                     id='contactNo'
-                    type='text'
+                    type='tel'
                     placeholder='Contact no.'
                     className='input input-bordered input-md w-full max-w-xs flex-grow'
                     {...register('contactNo')}
