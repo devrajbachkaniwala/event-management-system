@@ -1,0 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.error-msg {
+  @apply text-red-700 font-bold;
+}

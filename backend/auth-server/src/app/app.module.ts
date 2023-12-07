@@ -1,18 +1,23 @@
 import { Module, ValidationPipe } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { PrismaModule } from './prisma';
-import { AuthModule } from './auth';
 import { APP_PIPE } from '@nestjs/core';
+import {
+  AccountModule,
+  AuthModule,
+  PrismaModule,
+  SharedModule
+} from './modules';
 
 @Module({
   imports: [
-    PrismaModule,
     ConfigModule.forRoot({
       isGlobal: true
     }),
-    AuthModule
+    PrismaModule,
+    SharedModule,
+    AuthModule,
+    AccountModule
   ],
-  controllers: [],
   providers: [
     {
       provide: APP_PIPE,

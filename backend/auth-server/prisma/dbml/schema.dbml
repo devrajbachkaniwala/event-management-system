@@ -97,7 +97,8 @@ Table bookings {
 Enum Role {
   USER
   ADMIN
-  ORGANIZATION
+  ORGANIZATION_CREATOR
+  TEAM_MEMBER
 }
 
 Enum BookingStatus {
